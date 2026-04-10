@@ -260,10 +260,16 @@ function onTableAChange(silent) {
 function onJoinTableChange(id, silent) {
   const t = document.getElementById('sel-table-'+id)?.value;
   if (!t) return;
-  const mainCols = state.tables[document.getElementById('sel-tableA').value] || [];
+  const mainTable = document.getElementById('sel-tableA').value;
+  const mainCols = state.tables[mainTable] || [];
   const joinCols = state.tables[t] || [];
   fillSelect('sel-keyMain-'+id, mainCols);
   fillSelect('sel-keyJoin-'+id, joinCols);
+  // Update dynamic labels
+  const lblMain = document.getElementById('lbl-main-'+id);
+  const lblJoin = document.getElementById('lbl-join-'+id);
+  if (lblMain) lblMain.textContent = mainTable;
+  if (lblJoin) lblJoin.textContent = t;
   renderColRows(id);
   if (!silent) saveConfig();
 }
@@ -295,19 +301,21 @@ function addJoin(silent) {
       <span class="card-title">Jointure ${state.joins.length}</span>
       <button class="join-remove" onclick="removeJoin(${id})">Supprimer</button>
     </div>
-    <div class="g2" style="margin-bottom:10px">
-      <div>
-        <label>Table à joindre</label>
-        <select id="sel-table-${id}" onchange="onJoinTableChange(${id})">${tableOptions}</select>
-      </div>
-      <div>
-        <label>Clé dans la table principale</label>
-        <select id="sel-keyMain-${id}" onchange="saveConfig()">${colOptions}</select>
-      </div>
+    <div style="margin-bottom:10px">
+      <label>Table à joindre</label>
+      <select id="sel-table-${id}" onchange="onJoinTableChange(${id})">${tableOptions}</select>
     </div>
-    <div style="margin-bottom:12px">
-      <label>Clé dans cette table</label>
-      <select id="sel-keyJoin-${id}" onchange="saveConfig()"></select>
+    <div class="g2" style="margin-bottom:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px">
+      <div>
+        <label>Colonne clé dans <strong id="lbl-main-${id}">la table principale</strong></label>
+        <select id="sel-keyMain-${id}" onchange="saveConfig()">${colOptions}</select>
+        <div style="font-size:10px;color:#9ca3af;margin-top:3px">ex: client_id dans Commandes</div>
+      </div>
+      <div>
+        <label>Colonne clé dans <strong id="lbl-join-${id}">cette table</strong></label>
+        <select id="sel-keyJoin-${id}" onchange="saveConfig()"></select>
+        <div style="font-size:10px;color:#9ca3af;margin-top:3px">ex: id dans Clients</div>
+      </div>
     </div>
     <hr class="div">
     <div class="card-title" style="margin-bottom:8px">Colonnes à récupérer</div>
