@@ -1,0 +1,225 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.container { padding: 1.5rem 1rem; max-width: 720px; }
+h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 0.25rem; }
+.subtitle { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+.section-label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+.table-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.table-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
+.table-badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: var(--border-radius-md); }
+.badge-main { background: var(--color-background-info); color: var(--color-text-info); }
+.badge-join { background: var(--color-background-secondary); color: var(--color-text-secondary); border: 0.5px solid var(--color-border-secondary); }
+.table-name { font-size: 15px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+.row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-group { display: flex; flex-direction: column; gap: 4px; }
+.field-group label { font-size: 12px; color: var(--color-text-secondary); }
+.field-group input, .field-group select { width: 100%; font-size: 14px; color: var(--color-text-primary); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 6px 10px; }
+.join-connector { display: flex; align-items: center; gap: 10px; margin: -0.25rem 0 0.75rem 1rem; }
+.join-line { width: 2px; height: 32px; background: var(--color-border-secondary); border-radius: 2px; }
+.join-label { font-size: 12px; color: var(--color-text-secondary); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 3px 10px; }
+.join-type-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.75rem; }
+.join-btn { font-size: 12px; padding: 4px 12px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-secondary); cursor: pointer; }
+.join-btn.active { background: var(--color-background-info); color: var(--color-text-info); border-color: transparent; font-weight: 500; }
+.formula-box { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 1rem 1.25rem; margin-top: 1.25rem; }
+.formula-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 0.5rem; }
+.formula-code { font-family: var(--font-mono); font-size: 13px; color: var(--color-text-primary); white-space: pre-wrap; word-break: break-all; line-height: 1.6; }
+.copy-row { display: flex; justify-content: flex-end; margin-top: 0.75rem; gap: 8px; }
+.btn-primary { font-size: 13px; padding: 7px 16px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; }
+.btn-primary:hover { background: var(--color-background-secondary); }
+.btn-action { font-size: 13px; padding: 7px 16px; border: none; border-radius: var(--border-radius-md); background: var(--color-background-info); color: var(--color-text-info); cursor: pointer; font-weight: 500; }
+.info-banner { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 0.75rem 1rem; margin-top: 1.25rem; font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+</style>
+
+<div class="container">
+  <h2>Jointure de tables dans Grist</h2>
+  <p class="subtitle">Configurez la jointure de 3 fichiers Excel importés dans Grist</p>
+
+  <p class="section-label">Table principale (Table A)</p>
+  <div class="table-card">
+    <div class="table-header">
+      <span class="table-badge badge-main">Principale</span>
+      <span class="table-name">
+        <input id="nameA" style="border:none; background:transparent; font-size:15px; font-weight:500; color:var(--color-text-primary); width:100%; outline:none;" value="Commandes" placeholder="Nom de la table A" />
+      </span>
+    </div>
+    <div class="row-grid">
+      <div class="field-group">
+        <label>Colonne clé (ex: client_id)</label>
+        <input id="keyA" value="client_id" placeholder="Nom de la colonne" />
+      </div>
+      <div class="field-group">
+        <label>Colonnes à récupérer</label>
+        <input id="colsA" value="commande_id, date, montant" placeholder="col1, col2, ..." />
+      </div>
+    </div>
+  </div>
+
+  <div class="join-connector">
+    <div class="join-line"></div>
+    <span class="join-label" id="join1-label">LEFT JOIN</span>
+  </div>
+
+  <p class="section-label">Table B</p>
+  <div class="table-card">
+    <div class="table-header">
+      <span class="table-badge badge-join">Jointure 1</span>
+      <span class="table-name">
+        <input id="nameB" style="border:none; background:transparent; font-size:15px; font-weight:500; color:var(--color-text-primary); width:100%; outline:none;" value="Clients" placeholder="Nom de la table B" />
+      </span>
+    </div>
+    <div class="row-grid">
+      <div class="field-group">
+        <label>Colonne clé (clé étrangère)</label>
+        <input id="keyB" value="client_id" placeholder="Nom de la colonne" />
+      </div>
+      <div class="field-group">
+        <label>Colonnes à récupérer</label>
+        <input id="colsB" value="nom, email, ville" placeholder="col1, col2, ..." />
+      </div>
+    </div>
+    <div class="join-type-row" id="join1-types">
+      <button class="join-btn active" onclick="setJoin(1,'LEFT JOIN',this)">LEFT JOIN</button>
+      <button class="join-btn" onclick="setJoin(1,'INNER JOIN',this)">INNER JOIN</button>
+      <button class="join-btn" onclick="setJoin(1,'FULL JOIN',this)">FULL JOIN</button>
+    </div>
+  </div>
+
+  <div class="join-connector">
+    <div class="join-line"></div>
+    <span class="join-label" id="join2-label">LEFT JOIN</span>
+  </div>
+
+  <p class="section-label">Table C</p>
+  <div class="table-card">
+    <div class="table-header">
+      <span class="table-badge badge-join">Jointure 2</span>
+      <span class="table-name">
+        <input id="nameC" style="border:none; background:transparent; font-size:15px; font-weight:500; color:var(--color-text-primary); width:100%; outline:none;" value="Produits" placeholder="Nom de la table C" />
+      </span>
+    </div>
+    <div class="row-grid">
+      <div class="field-group">
+        <label>Colonne clé de A (référence)</label>
+        <input id="keyC_from" value="produit_id" placeholder="Col dans table A ou B" />
+      </div>
+      <div class="field-group">
+        <label>Colonne clé dans C</label>
+        <input id="keyC" value="produit_id" placeholder="Nom de la colonne" />
+      </div>
+    </div>
+    <div class="row-grid" style="margin-top: 8px;">
+      <div class="field-group">
+        <label>Colonnes à récupérer</label>
+        <input id="colsC" value="nom_produit, categorie, prix" placeholder="col1, col2, ..." />
+      </div>
+    </div>
+    <div class="join-type-row" id="join2-types">
+      <button class="join-btn active" onclick="setJoin(2,'LEFT JOIN',this)">LEFT JOIN</button>
+      <button class="join-btn" onclick="setJoin(2,'INNER JOIN',this)">INNER JOIN</button>
+      <button class="join-btn" onclick="setJoin(2,'FULL JOIN',this)">FULL JOIN</button>
+    </div>
+  </div>
+
+  <div id="formula-section" class="formula-box">
+    <div class="formula-label">Formule Grist générée — à coller dans une colonne de formule</div>
+    <div id="formula-output" class="formula-code"></div>
+  </div>
+
+  <div class="copy-row">
+    <button class="btn-primary" onclick="generateFormula()">Régénérer</button>
+    <button class="btn-action" onclick="copyFormula()">Copier la formule ↗</button>
+  </div>
+
+  <div class="info-banner">
+    <strong style="font-weight:500;">Comment utiliser dans Grist</strong><br>
+    1. Importez vos 3 fichiers Excel via <em>Ajouter nouveau &gt; Importer depuis un fichier</em>.<br>
+    2. Créez une nouvelle table vide ou utilisez une table existante.<br>
+    3. Créez une colonne de formule et collez la formule générée ci-dessus.<br>
+    4. Grist utilise Python — les jointures se font via <code>VLOOKUP</code> ou via des <strong>références de colonnes</strong>.
+  </div>
+</div>
+
+<script>
+const joinTypes = { 1: 'LEFT JOIN', 2: 'LEFT JOIN' };
+
+function setJoin(num, type, btn) {
+  joinTypes[num] = type;
+  document.getElementById('join' + num + '-label').textContent = type;
+  const container = document.getElementById('join' + num + '-types');
+  container.querySelectorAll('.join-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  generateFormula();
+}
+
+function v(id) { return document.getElementById(id).value.trim(); }
+
+function generateFormula() {
+  const tA = v('nameA'), tB = v('nameB'), tC = v('nameC');
+  const kA = v('keyA'), kB = v('keyB');
+  const kCfrom = v('keyC_from'), kC = v('keyC');
+  const colsB = v('colsB').split(',').map(s => s.trim()).filter(Boolean);
+  const colsC = v('colsC').split(',').map(s => s.trim()).filter(Boolean);
+  const j1 = joinTypes[1], j2 = joinTypes[2];
+
+  let lines = [];
+  lines.push(`# Jointure ${tA} + ${tB} (${j1}) + ${tC} (${j2})`);
+  lines.push(`# Collez chaque formule dans une colonne dédiée de votre table ${tA}`);
+  lines.push('');
+
+  if (colsB.length > 0) {
+    lines.push(`# --- Colonnes depuis ${tB} ---`);
+    colsB.forEach(col => {
+      if (j1 === 'INNER JOIN') {
+        lines.push(`# Colonne: ${col}`);
+        lines.push(`${tB}.lookupOne(${kB}=$${kA}).${col}`);
+      } else {
+        lines.push(`# Colonne: ${col} (None si absent)`);
+        lines.push(`${tB}.lookupOne(${kB}=$${kA}).${col} or None`);
+      }
+      lines.push('');
+    });
+  }
+
+  if (colsC.length > 0) {
+    lines.push(`# --- Colonnes depuis ${tC} ---`);
+    colsC.forEach(col => {
+      if (j2 === 'INNER JOIN') {
+        lines.push(`# Colonne: ${col}`);
+        lines.push(`${tC}.lookupOne(${kC}=$${kCfrom}).${col}`);
+      } else {
+        lines.push(`# Colonne: ${col} (None si absent)`);
+        lines.push(`${tC}.lookupOne(${kC}=$${kCfrom}).${col} or None`);
+      }
+      lines.push('');
+    });
+  }
+
+  lines.push(`# --- Exemple: plusieurs colonnes en une seule formule ---`);
+  const exB = colsB[0] || 'nom';
+  const exC = colsC[0] || 'categorie';
+  lines.push(`{`);
+  lines.push(`  "${tB}_${exB}": ${tB}.lookupOne(${kB}=$${kA}).${exB},`);
+  lines.push(`  "${tC}_${exC}": ${tC}.lookupOne(${kC}=$${kCfrom}).${exC}`);
+  lines.push(`}`);
+
+  document.getElementById('formula-output').textContent = lines.join('\n');
+}
+
+function copyFormula() {
+  const text = document.getElementById('formula-output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = 'Copié !';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+['nameA','nameB','nameC','keyA','keyB','keyC_from','keyC','colsA','colsB','colsC'].forEach(id => {
+  document.getElementById(id).addEventListener('input', generateFormula);
+});
+
+generateFormula();
+</script>
