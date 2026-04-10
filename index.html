@@ -3,89 +3,102 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jointure de tables — Grist Widget</title>
+<title>Jointure + Formules — Grist Widget</title>
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 <style>
-  :root {
-    --blue:#2563eb;--blue-l:#eff6ff;--blue-b:#bfdbfe;
-    --gray:#6b7280;--gray-l:#f9fafb;--gray-b:#e5e7eb;
-    --green:#16a34a;--green-l:#f0fdf4;--green-b:#bbf7d0;
-    --red:#dc2626;--red-l:#fef2f2;--red-b:#fecaca;
-    --text:#111827;--muted:#6b7280;
-    --r:8px;--rs:5px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:var(--text);background:#fff;}
-  #app{display:flex;flex-direction:column;height:100vh;}
+:root {
+  --blue:#2563eb;--blue-l:#eff6ff;--blue-b:#bfdbfe;
+  --green:#16a34a;--green-l:#f0fdf4;--green-b:#bbf7d0;
+  --purple:#7c3aed;--purple-l:#f5f3ff;--purple-b:#ddd6fe;
+  --red:#dc2626;--red-l:#fef2f2;--red-b:#fecaca;
+  --gray:#6b7280;--gray-l:#f9fafb;--gray-b:#e5e7eb;
+  --text:#111827;--muted:#6b7280;
+  --r:8px;--rs:5px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:var(--text);background:#fff;}
+#app{display:flex;flex-direction:column;height:100vh;}
 
-  .tabs{display:flex;border-bottom:1px solid var(--gray-b);background:var(--gray-l);}
-  .tab{padding:10px 18px;cursor:pointer;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;}
-  .tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500;background:#fff;}
+.tabs{display:flex;border-bottom:1px solid var(--gray-b);background:var(--gray-l);}
+.tab{padding:10px 16px;cursor:pointer;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500;background:#fff;}
 
-  .panel{display:none;flex:1;overflow-y:auto;padding:16px;}
-  .panel.active{display:block;}
+.panel{display:none;flex:1;overflow-y:auto;padding:16px;}
+.panel.active{display:block;}
 
-  .card{border:1px solid var(--gray-b);border-radius:var(--r);padding:14px;margin-bottom:12px;background:#fff;}
-  .card-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
-  .card-title{font-weight:500;font-size:13px;color:var(--text);}
+.card{border:1px solid var(--gray-b);border-radius:var(--r);padding:14px;margin-bottom:12px;background:#fff;}
+.card-title{font-weight:500;font-size:13px;color:var(--text);margin-bottom:10px;}
+.card-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
 
-  label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;}
-  select,input[type=text]{width:100%;padding:7px 10px;border:1px solid var(--gray-b);border-radius:var(--rs);font-size:13px;color:var(--text);background:#fff;}
-  select:focus,input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.1);}
-  .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .g3{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;}
+label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;}
+select,input[type=text],textarea{width:100%;padding:7px 10px;border:1px solid var(--gray-b);border-radius:var(--rs);font-size:13px;color:var(--text);background:#fff;font-family:inherit;}
+textarea{resize:vertical;min-height:60px;font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.1);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
-  .btn{padding:7px 14px;border-radius:var(--rs);font-size:13px;cursor:pointer;border:1px solid var(--gray-b);background:#fff;color:var(--text);}
-  .btn:hover{background:var(--gray-l);}
-  .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);}
-  .btn-primary:hover{background:#1d4ed8;}
-  .btn-success{background:var(--green);color:#fff;border-color:var(--green);}
-  .btn-success:hover{background:#15803d;}
-  .btn-danger{background:var(--red-l);color:var(--red);border-color:var(--red-b);}
-  .btn-danger:hover{background:#fee2e2;}
-  .btn-sm{padding:4px 10px;font-size:12px;}
-  .btn-icon{padding:3px 7px;font-size:13px;border:none;background:none;cursor:pointer;color:var(--muted);}
-  .btn-icon:hover{color:var(--red);}
-  .btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;}
+.btn{padding:7px 14px;border-radius:var(--rs);font-size:13px;cursor:pointer;border:1px solid var(--gray-b);background:#fff;color:var(--text);}
+.btn:hover{background:var(--gray-l);}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+.btn-primary:hover{background:#1d4ed8;}
+.btn-success{background:var(--green);color:#fff;border-color:var(--green);}
+.btn-success:hover{background:#15803d;}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-icon{padding:3px 7px;font-size:13px;border:none;background:none;cursor:pointer;color:var(--muted);}
+.btn-icon:hover{color:var(--red);}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;}
+.btn-remove{padding:3px 8px;font-size:12px;border:1px solid var(--red-b);border-radius:var(--rs);background:var(--red-l);color:var(--red);cursor:pointer;}
+.btn-remove:hover{background:#fee2e2;}
 
-  /* JOIN BLOCK */
-  .join-block{position:relative;border:1px solid var(--gray-b);border-radius:var(--r);padding:14px;margin-bottom:8px;background:#fff;}
-  .join-block-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
-  .join-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;}
-  .join-remove{margin-left:auto;padding:3px 8px;font-size:12px;border:1px solid var(--red-b);border-radius:var(--rs);background:var(--red-l);color:var(--red);cursor:pointer;}
-  .join-remove:hover{background:#fee2e2;}
+/* JOIN BLOCKS */
+.join-block{border:1px solid var(--gray-b);border-radius:var(--r);padding:14px;margin-bottom:8px;background:#fff;}
+.join-block-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.join-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;}
+.join-connector{display:flex;align-items:center;gap:10px;margin:0 0 8px 20px;}
+.join-line{width:2px;height:28px;background:var(--gray-b);border-radius:2px;}
+.join-type-sel{width:auto;padding:3px 8px;font-size:11px;border:1px solid var(--gray-b);border-radius:var(--rs);}
 
-  .join-connector{display:flex;align-items:center;gap:10px;margin:0 0 8px 20px;}
-  .join-line{width:2px;height:28px;background:var(--gray-b);border-radius:2px;}
-  .join-type-sel{width:auto;padding:3px 8px;font-size:11px;border:1px solid var(--gray-b);border-radius:var(--rs);}
+.col-head{display:grid;gap:8px;margin-bottom:4px;}
+.col-head span{font-size:11px;color:var(--muted);}
+.col-row{display:grid;gap:8px;align-items:start;margin-bottom:8px;}
+.col-row-simple{grid-template-columns:1fr 1fr auto;}
+.col-row-formula{grid-template-columns:1fr auto;}
 
-  .col-head{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:4px;}
-  .col-head span{font-size:11px;color:var(--muted);}
-  .col-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;margin-bottom:6px;}
+/* FORMULA SECTION */
+.formula-block{border:1px solid var(--purple-b);border-radius:var(--r);padding:14px;margin-bottom:8px;background:var(--purple-l);}
+.formula-block-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.formula-hint{background:#fff;border:1px solid var(--purple-b);border-radius:var(--rs);padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--purple);}
+.formula-hint code{background:var(--purple-l);padding:1px 5px;border-radius:3px;font-size:11px;}
+.formula-row{margin-bottom:10px;}
+.formula-row-head{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:4px;}
+.formula-row-head span{font-size:11px;color:var(--muted);}
+.formula-row-body{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:start;}
+.snippet-btn{font-size:11px;padding:3px 8px;border:1px solid var(--purple-b);border-radius:var(--rs);background:#fff;color:var(--purple);cursor:pointer;white-space:nowrap;}
+.snippet-btn:hover{background:var(--purple-l);}
+.snippets-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
 
-  .status{padding:8px 12px;border-radius:var(--rs);font-size:12px;margin-bottom:10px;}
-  .s-info{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-b);}
-  .s-ok{background:var(--green-l);color:var(--green);border:1px solid var(--green-b);}
-  .s-warn{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;}
-  .s-err{background:var(--red-l);color:var(--red);border:1px solid var(--red-b);}
+/* STATUS */
+.status{padding:8px 12px;border-radius:var(--rs);font-size:12px;margin-bottom:10px;}
+.s-info{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-b);}
+.s-ok{background:var(--green-l);color:var(--green);border:1px solid var(--green-b);}
+.s-warn{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;}
+.s-err{background:var(--red-l);color:var(--red);border:1px solid var(--red-b);}
 
-  .preview-wrap{overflow-x:auto;border:1px solid var(--gray-b);border-radius:var(--r);}
-  table.pv{width:100%;border-collapse:collapse;font-size:12px;}
-  table.pv th{background:var(--gray-l);padding:7px 10px;text-align:left;font-weight:500;border-bottom:1px solid var(--gray-b);white-space:nowrap;}
-  table.pv td{padding:6px 10px;border-bottom:1px solid #f3f4f6;}
-  table.pv tr:last-child td{border-bottom:none;}
-  table.pv td.empty{color:#d1d5db;font-style:italic;}
+/* PREVIEW */
+.preview-wrap{overflow-x:auto;border:1px solid var(--gray-b);border-radius:var(--r);}
+table.pv{width:100%;border-collapse:collapse;font-size:12px;}
+table.pv th{background:var(--gray-l);padding:7px 10px;text-align:left;font-weight:500;border-bottom:1px solid var(--gray-b);white-space:nowrap;}
+table.pv td{padding:6px 10px;border-bottom:1px solid #f3f4f6;}
+table.pv tr:last-child td{border-bottom:none;}
+table.pv td.empty{color:#d1d5db;font-style:italic;}
+table.pv td.err{color:var(--red);font-style:italic;font-size:11px;}
 
-  .palette{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;}
-  .swatch{width:16px;height:16px;border-radius:3px;}
-
-  #loading{display:flex;align-items:center;justify-content:center;height:100vh;color:var(--muted);gap:8px;}
-  .spin{width:18px;height:18px;border:2px solid var(--gray-b);border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;}
-  @keyframes sp{to{transform:rotate(360deg);}}
-
-  hr.div{border:none;border-top:1px solid var(--gray-b);margin:12px 0;}
-  .mono{font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;background:var(--gray-l);padding:2px 6px;border-radius:4px;}
-  .small{font-size:11px;color:var(--muted);margin-top:4px;}
+#loading{display:flex;align-items:center;justify-content:center;height:100vh;color:var(--muted);gap:8px;}
+.spin{width:18px;height:18px;border:2px solid var(--gray-b);border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+hr.div{border:none;border-top:1px solid var(--gray-b);margin:12px 0;}
+.mono{font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;background:var(--gray-l);padding:2px 6px;border-radius:4px;}
+.small{font-size:11px;color:var(--muted);margin-top:4px;}
+.tag{font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;}
 </style>
 </head>
 <body>
@@ -94,29 +107,42 @@
 
 <div id="app" style="display:none">
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('config')">Configuration</div>
-    <div class="tab" onclick="switchTab('preview')">Aperçu</div>
-    <div class="tab" onclick="switchTab('apply')">Appliquer</div>
+    <div class="tab active"  onclick="switchTab('config')">Configuration</div>
+    <div class="tab"         onclick="switchTab('formulas')">Formules</div>
+    <div class="tab"         onclick="switchTab('preview')">Aperçu</div>
+    <div class="tab"         onclick="switchTab('apply')">Appliquer</div>
   </div>
 
   <!-- CONFIG -->
   <div class="panel active" id="tab-config">
-    <div class="card" id="card-main">
+    <div class="card">
       <div class="card-head">
-        <div class="join-num" style="background:#eff6ff;color:#2563eb">A</div>
-        <span class="card-title">Table principale</span>
+        <div class="join-num" style="background:var(--blue-l);color:var(--blue)">A</div>
+        <span class="card-title" style="margin:0">Table principale</span>
       </div>
-      <div>
-        <label>Table</label>
-        <select id="sel-tableA" onchange="onTableAChange()"></select>
-      </div>
+      <label>Table</label>
+      <select id="sel-tableA" onchange="onTableAChange()"></select>
     </div>
-
     <div id="joins-container"></div>
-
     <div class="btn-row">
-      <button class="btn btn-sm btn-primary" onclick="addJoin()">+ Ajouter une jointure</button>
-      <button class="btn btn-sm" onclick="switchTab('preview'); renderPreview()">Aperçu →</button>
+      <button class="btn btn-sm btn-primary" onclick="addJoin()">+ Jointure</button>
+      <button class="btn btn-sm" onclick="switchTab('formulas')">Formules →</button>
+      <button class="btn btn-sm" onclick="switchTab('preview');renderPreview()">Aperçu →</button>
+    </div>
+  </div>
+
+  <!-- FORMULAS -->
+  <div class="panel" id="tab-formulas">
+    <div class="formula-hint">
+      Créez des colonnes calculées à partir des données jointes.<br>
+      Utilisez <code>$col</code> pour les colonnes de la table principale et les colonnes récupérées par jointure.<br>
+      Exemples : <code>$nom + " " + $prenom</code> &nbsp;·&nbsp; <code>$quantite * $prix</code> &nbsp;·&nbsp; <code>"Oui" if $montant > 100 else "Non"</code>
+    </div>
+    <div id="snippets-container" class="snippets-row"></div>
+    <div id="formulas-list"></div>
+    <div class="btn-row">
+      <button class="btn btn-sm btn-primary" onclick="addFormulaRow()">+ Colonne calculée</button>
+      <button class="btn btn-sm" onclick="switchTab('preview');renderPreview()">Aperçu →</button>
     </div>
   </div>
 
@@ -129,13 +155,11 @@
   <!-- APPLY -->
   <div class="panel" id="tab-apply">
     <div class="card">
-      <div class="card-title" style="margin-bottom:12px">
-        Colonnes à créer dans <span id="apply-tname" style="color:var(--blue)">—</span>
-      </div>
+      <div class="card-title">Colonnes à créer dans <span id="apply-tname" style="color:var(--blue)">—</span></div>
       <div id="apply-list"></div>
       <div id="apply-status"></div>
       <div class="btn-row" style="margin-top:12px">
-        <button class="btn btn-success" onclick="applyJoins()">Créer les colonnes dans Grist</button>
+        <button class="btn btn-success" onclick="applyAll()">Créer toutes les colonnes dans Grist</button>
       </div>
       <p class="small">Les colonnes déjà existantes seront ignorées.</p>
     </div>
@@ -151,17 +175,30 @@ const COLORS = [
   {bg:'#fefce8',fg:'#ca8a04',border:'#fde68a',label:'E'},
   {bg:'#f0f9ff',fg:'#0284c7',border:'#bae6fd',label:'F'},
   {bg:'#fff1f2',fg:'#e11d48',border:'#fecdd3',label:'G'},
-  {bg:'#f5f3ff',fg:'#7c3aed',border:'#ddd6fe',label:'H'},
-  {bg:'#ecfdf5',fg:'#059669',border:'#a7f3d0',label:'I'},
+];
+
+// ── SNIPPETS ─────────────────────────────────────────────────────
+const SNIPPETS = [
+  { label:'Concaténation', formula:'$col1 + " " + $col2', name:'concat' },
+  { label:'Calcul ×', formula:'$quantite * $prix', name:'total' },
+  { label:'Arrondi', formula:'round($montant, 2)', name:'arrondi' },
+  { label:'Condition', formula:'"Oui" if $montant > 100 else "Non"', name:'condition' },
+  { label:'Majuscules', formula:'$nom.upper()', name:'upper' },
+  { label:'Trim', formula:'$col.strip()', name:'trim' },
+  { label:'Date format', formula:'str($date)', name:'date' },
+  { label:'Valeur par défaut', formula:'$col or "inconnu"', name:'default' },
 ];
 
 // ── STATE ────────────────────────────────────────────────────────
 const state = {
   tables: {},
   tableNames: [],
-  // joins: array of { tableKey, keyInMain, keyInJoin, joinType, cols:[{src,dest}] }
   joins: [],
+  // formulas: [{id, name, formula}]
+  formulas: [],
 };
+
+let _jinc = 0, _finc = 0;
 
 // ── PERSISTENCE ──────────────────────────────────────────────────
 async function saveConfig() {
@@ -175,14 +212,15 @@ async function saveConfig() {
         joinType:  document.getElementById('sel-jtype-'+j.id)?.value,
         cols: j.cols,
       })),
+      formulas: state.formulas,
     };
-    await grist.setOption('joinConfigV2', JSON.stringify(cfg));
+    await grist.setOption('joinConfigV3', JSON.stringify(cfg));
   } catch(e) {}
 }
 
 async function loadConfig() {
   try {
-    const raw = await grist.getOption('joinConfigV2');
+    const raw = await grist.getOption('joinConfigV3');
     return raw ? JSON.parse(raw) : null;
   } catch(e) { return null; }
 }
@@ -208,11 +246,15 @@ function applyConfig(cfg) {
     const jObj = state.joins.find(x => x.id === id);
     if (jObj && j.cols?.length) { jObj.cols = j.cols; renderColRows(id); }
   });
+  state.formulas = [];
+  document.getElementById('formulas-list').innerHTML = '';
+  (cfg.formulas || []).forEach(f => {
+    addFormulaRow(f.name, f.formula, true);
+  });
 }
 
 // ── GRIST INIT ───────────────────────────────────────────────────
 let _inited = false;
-
 async function init() {
   if (_inited) return;
   _inited = true;
@@ -224,6 +266,7 @@ async function init() {
       state.tables[t] = Object.keys(rows).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
     }
     populateMainSelect();
+    renderSnippets();
     let saved = null;
     try { saved = await loadConfig(); } catch(e) {}
     if (saved) { applyConfig(saved); }
@@ -235,9 +278,18 @@ async function init() {
       `<div style="color:var(--red);text-align:center;padding:20px">Erreur : ${e.message}</div>`;
   }
 }
-
 grist.ready({ requiredAccess: 'full' });
 grist.on('message', () => init());
+
+// ── SNIPPETS ─────────────────────────────────────────────────────
+function renderSnippets() {
+  const c = document.getElementById('snippets-container');
+  c.innerHTML = SNIPPETS.map(s =>
+    `<button class="snippet-btn" onclick="addFormulaRow('${s.name}','${s.formula.replace(/'/g,"\\'")}')">
+      + ${s.label}
+    </button>`
+  ).join('');
+}
 
 // ── SELECTS ──────────────────────────────────────────────────────
 function populateMainSelect() {
@@ -245,15 +297,7 @@ function populateMainSelect() {
   sel.innerHTML = state.tableNames.map(n => `<option value="${n}">${n}</option>`).join('');
 }
 
-function fillSelect(id, cols, currentVal) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.innerHTML = cols.map(c => `<option value="${c}">${c}</option>`).join('');
-  if (currentVal && [...el.options].some(o => o.value === currentVal)) el.value = currentVal;
-}
-
 function onTableAChange(silent) {
-  // nothing extra needed for main table — keys are populated per join
   if (!silent) saveConfig();
 }
 
@@ -263,13 +307,10 @@ function onJoinTableChange(id, silent) {
   const mainTable = document.getElementById('sel-tableA').value;
   const mainCols = state.tables[mainTable] || [];
   const joinCols = state.tables[joinTable] || [];
-
-  // Populate key selects with correct columns
   const selMain = document.getElementById('sel-keyMain-'+id);
   const selJoin = document.getElementById('sel-keyJoin-'+id);
   const prevMain = selMain?.value;
   const prevJoin = selJoin?.value;
-
   if (selMain) {
     selMain.innerHTML = mainCols.map(c => `<option value="${c}">${c}</option>`).join('');
     if (prevMain && mainCols.includes(prevMain)) selMain.value = prevMain;
@@ -278,35 +319,30 @@ function onJoinTableChange(id, silent) {
     selJoin.innerHTML = joinCols.map(c => `<option value="${c}">${c}</option>`).join('');
     if (prevJoin && joinCols.includes(prevJoin)) selJoin.value = prevJoin;
   }
-
-  // Update labels with real table names
   const lblMain = document.getElementById('lbl-main-'+id);
   const lblJoin = document.getElementById('lbl-join-'+id);
   if (lblMain) lblMain.textContent = mainTable;
   if (lblJoin) lblJoin.textContent = joinTable;
-
   renderColRows(id);
   if (!silent) saveConfig();
 }
 
-// ── JOIN BLOCKS ──────────────────────────────────────────────────
-let _jid = 0;
+// ── JOIN BLOCKS ───────────────────────────────────────────────────
 function addJoin(silent) {
-  const id = ++_jid;
-  const colorIdx = (state.joins.length) % COLORS.length;
+  const id = ++_jinc;
+  const colorIdx = state.joins.length % COLORS.length;
   const color = COLORS[colorIdx];
   state.joins.push({ id, cols: [{ src: '', dest: '' }], colorIdx });
-
   const mainTable = document.getElementById('sel-tableA').value;
   const mainCols = state.tables[mainTable] || [];
   const colOptions = mainCols.map(c => `<option value="${c}">${c}</option>`).join('');
-  // Pick a default join table (different from main if possible)
   const firstJoinTable = state.tableNames.find(n => n !== mainTable) || state.tableNames[0] || '';
   const joinCols = state.tables[firstJoinTable] || [];
   const joinColOptions = joinCols.map(c => `<option value="${c}">${c}</option>`).join('');
-  const tableOptions = state.tableNames.map(n => `<option value="${n}"${n===firstJoinTable?' selected':''}>${n}</option>`).join('');
+  const tableOptions = state.tableNames.map(n =>
+    `<option value="${n}"${n===firstJoinTable?' selected':''}>${n}</option>`).join('');
 
-  const html = `
+  document.getElementById('joins-container').insertAdjacentHTML('beforeend', `
   <div class="join-connector" id="conn-${id}">
     <div class="join-line"></div>
     <select class="join-type-sel" id="sel-jtype-${id}" onchange="saveConfig()">
@@ -317,31 +353,30 @@ function addJoin(silent) {
   <div class="join-block" id="jblock-${id}">
     <div class="join-block-head">
       <div class="join-num" style="background:${color.bg};color:${color.fg};border:1px solid ${color.border}">${color.label}</div>
-      <span class="card-title">Jointure ${state.joins.length}</span>
-      <button class="join-remove" onclick="removeJoin(${id})">Supprimer</button>
+      <span class="card-title" style="margin:0">Jointure ${state.joins.length}</span>
+      <button class="btn-remove" style="margin-left:auto" onclick="removeJoin(${id})">Supprimer</button>
     </div>
     <div style="margin-bottom:10px">
       <label>Table à joindre</label>
       <select id="sel-table-${id}" onchange="onJoinTableChange(${id})">${tableOptions}</select>
     </div>
-    <div class="g2" style="margin-bottom:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px">
+    <div class="g2" style="margin-bottom:12px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px">
       <div>
-        <label>Colonne clé dans <strong id="lbl-main-${id}">${mainTable}</strong> <span style="font-size:10px;font-weight:400;color:#9ca3af">(table principale)</span></label>
+        <label>Clé dans <strong id="lbl-main-${id}">${mainTable}</strong> <span style="font-size:10px;font-weight:400;color:#9ca3af">(table principale)</span></label>
         <select id="sel-keyMain-${id}" onchange="saveConfig()">${colOptions}</select>
       </div>
       <div>
-        <label>Colonne clé dans <strong id="lbl-join-${id}">${firstJoinTable}</strong> <span style="font-size:10px;font-weight:400;color:#9ca3af">(table jointe)</span></label>
+        <label>Clé dans <strong id="lbl-join-${id}">${firstJoinTable}</strong> <span style="font-size:10px;font-weight:400;color:#9ca3af">(table jointe)</span></label>
         <select id="sel-keyJoin-${id}" onchange="saveConfig()">${joinColOptions}</select>
       </div>
     </div>
     <hr class="div">
-    <div class="card-title" style="margin-bottom:8px">Colonnes à récupérer</div>
-    <div class="col-head"><span>Colonne source</span><span>Nom dans table principale</span><span></span></div>
+    <div class="card-title">Colonnes à récupérer</div>
+    <div class="col-head col-row-simple"><span>Colonne source</span><span>Nom dans table principale</span><span></span></div>
     <div id="colrows-${id}"></div>
     <button class="btn btn-sm" onclick="addColRow(${id})">+ Colonne</button>
-  </div>`;
+  </div>`);
 
-  document.getElementById('joins-container').insertAdjacentHTML('beforeend', html);
   onJoinTableChange(id, true);
   if (!silent) saveConfig();
   return id;
@@ -351,19 +386,17 @@ function removeJoin(id) {
   state.joins = state.joins.filter(j => j.id !== id);
   document.getElementById('jblock-'+id)?.remove();
   document.getElementById('conn-'+id)?.remove();
-  // Re-label remaining joins
-  state.joins.forEach((j, i) => {
-    const head = document.querySelector(`#jblock-${j.id} .card-title`);
-    if (head) head.textContent = `Jointure ${i+1}`;
+  state.joins.forEach((j,i) => {
+    const h = document.querySelector(`#jblock-${j.id} .card-title`);
+    if (h) h.textContent = `Jointure ${i+1}`;
   });
   saveConfig();
 }
 
-// ── COL ROWS ─────────────────────────────────────────────────────
 function addColRow(id) {
   const j = state.joins.find(x => x.id === id);
   if (!j) return;
-  j.cols.push({ src: '', dest: '' });
+  j.cols.push({ src:'', dest:'' });
   renderColRows(id);
   saveConfig();
 }
@@ -383,10 +416,10 @@ function renderColRows(id) {
   const tname = document.getElementById('sel-table-'+id)?.value;
   const cols = state.tables[tname] || [];
   container.innerHTML = j.cols.map((row, i) => `
-    <div class="col-row">
+    <div class="col-row col-row-simple">
       <select onchange="state.joins.find(x=>x.id===${id}).cols[${i}].src=this.value;saveConfig()">
         <option value="">— choisir —</option>
-        ${cols.map(c => `<option value="${c}"${row.src===c?' selected':''}>${c}</option>`).join('')}
+        ${cols.map(c=>`<option value="${c}"${row.src===c?' selected':''}>${c}</option>`).join('')}
       </select>
       <input type="text" placeholder="nom_dans_principale" value="${row.dest}"
         oninput="state.joins.find(x=>x.id===${id}).cols[${i}].dest=this.value;saveConfig()" />
@@ -394,12 +427,59 @@ function renderColRows(id) {
     </div>`).join('');
 }
 
-// ── TABS ─────────────────────────────────────────────────────────
+// ── FORMULA ROWS ──────────────────────────────────────────────────
+function addFormulaRow(name, formula, silent) {
+  const id = ++_finc;
+  state.formulas.push({ id, name: name||'', formula: formula||'' });
+  const container = document.getElementById('formulas-list');
+
+  container.insertAdjacentHTML('beforeend', `
+  <div class="formula-block" id="fblock-${id}">
+    <div class="formula-block-head">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+      <span style="font-size:13px;font-weight:500;color:var(--purple)">Colonne calculée</span>
+      <button class="btn-remove" style="margin-left:auto" onclick="removeFormulaRow(${id})">Supprimer</button>
+    </div>
+    <div class="g2" style="margin-bottom:8px">
+      <div>
+        <label>Nom de la colonne à créer</label>
+        <input type="text" id="fname-${id}" placeholder="ex: nom_complet" value="${name||''}"
+          oninput="state.formulas.find(x=>x.id===${id}).name=this.value;saveConfig()" />
+      </div>
+      <div>
+        <label>Type</label>
+        <select id="ftype-${id}" onchange="saveConfig()">
+          <option value="Any">Automatique</option>
+          <option value="Text">Texte</option>
+          <option value="Numeric">Numérique</option>
+          <option value="Bool">Booléen</option>
+          <option value="Date">Date</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <label>Formule Python</label>
+      <textarea id="fformula-${id}" rows="2" placeholder="ex: $nom + ' ' + $prenom"
+        oninput="state.formulas.find(x=>x.id===${id}).formula=this.value;saveConfig()">${formula||''}</textarea>
+    </div>
+    <div id="fpreview-${id}" style="margin-top:6px;font-size:11px;color:var(--muted)"></div>
+  </div>`);
+
+  if (!silent) saveConfig();
+  return id;
+}
+
+function removeFormulaRow(id) {
+  state.formulas = state.formulas.filter(f => f.id !== id);
+  document.getElementById('fblock-'+id)?.remove();
+  saveConfig();
+}
+
+// ── TABS ──────────────────────────────────────────────────────────
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) =>
-    t.classList.toggle('active', ['config','preview','apply'][i]===name));
-  document.querySelectorAll('.panel').forEach((p,i) =>
-    p.classList.toggle('active', ['tab-config','tab-preview','tab-apply'][i]==='tab-'+name));
+  const names = ['config','formulas','preview','apply'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', names[i]===name));
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', 'tab-'+names[i]==='tab-'+name));
   if (name==='preview') renderPreview();
   if (name==='apply') renderApply();
 }
@@ -407,28 +487,43 @@ function switchTab(name) {
 // ── FETCH ─────────────────────────────────────────────────────────
 async function fetchTableData(tableName) {
   const raw = await grist.docApi.fetchTable(tableName);
-  // Grist returns column-oriented data: { colId: [val, val, ...], ... }
-  const cols = Object.keys(raw).filter(k =>
-    k !== 'manualSort' && !k.startsWith('gristHelper_')
-  );
+  const cols = Object.keys(raw).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
   if (!cols.length) return [];
   const len = raw[cols[0]]?.length || 0;
-  const rows = [];
-  for (let i = 0; i < len; i++) {
-    const row = {};
-    for (const c of cols) row[c] = raw[c][i];
-    rows.push(row);
-  }
-  return rows;
+  return Array.from({length:len}, (_,i) => Object.fromEntries(cols.map(c => [c, raw[c][i]])));
 }
 
-// Also refresh table columns list from live data
-async function refreshTableCols(tableName) {
-  const rows = await grist.docApi.fetchTable(tableName);
-  state.tables[tableName] = Object.keys(rows).filter(k =>
-    k !== 'manualSort' && !k.startsWith('gristHelper_')
-  );
-  return state.tables[tableName];
+// ── EVAL FORMULA (client-side preview) ───────────────────────────
+function evalFormula(formula, row) {
+  // Simple client-side eval for preview only
+  // Replace $col references with actual values
+  try {
+    let expr = formula;
+    const colRefs = [...new Set((formula.match(/\$[a-zA-Z_][a-zA-Z0-9_]*/g)||[]))];
+    // Sort by length desc to avoid partial replacements
+    colRefs.sort((a,b) => b.length - a.length);
+    for (const ref of colRefs) {
+      const col = ref.slice(1);
+      let val = row[col];
+      if (val === undefined || val === null) val = '';
+      if (typeof val === 'string') {
+        expr = expr.replaceAll(ref, JSON.stringify(val));
+      } else {
+        expr = expr.replaceAll(ref, val);
+      }
+    }
+    // Handle Python-style ternary: "x" if cond else "y" → cond ? "x" : "y"
+    expr = expr.replace(/(.+?)\s+if\s+(.+?)\s+else\s+(.+)/g, '($2) ? ($1) : ($3)');
+    // Python string methods
+    expr = expr.replace(/\.upper\(\)/g, '.toUpperCase()');
+    expr = expr.replace(/\.lower\(\)/g, '.toLowerCase()');
+    expr = expr.replace(/\.strip\(\)/g, '.trim()');
+    // Python round
+    expr = expr.replace(/round\((.+?),\s*(\d+)\)/g, '(Math.round(($1) * Math.pow(10,$2)) / Math.pow(10,$2))');
+    return eval(expr); // eslint-disable-line
+  } catch(e) {
+    return `#ERR: ${e.message}`;
+  }
 }
 
 // ── PREVIEW ──────────────────────────────────────────────────────
@@ -440,91 +535,93 @@ async function renderPreview() {
   container.innerHTML = '';
 
   const tA = document.getElementById('sel-tableA').value;
-  if (!tA || !state.joins.length) {
-    statusEl.textContent = 'Ajoutez au moins une jointure.'; return;
-  }
+  if (!tA) { statusEl.textContent = 'Choisissez une table principale.'; return; }
 
   try {
     const rowsA = await fetchTableData(tA);
-    const colsA = Object.keys(rowsA[0] || {});
-    statusEl.textContent = `Table principale "${tA}" : ${rowsA.length} lignes, colonnes : ${colsA.join(', ')}`;
-
     if (!rowsA.length) {
       statusEl.className='status s-warn';
-      statusEl.textContent=`La table "${tA}" est vide ou inaccessible.`; return;
+      statusEl.textContent=`Table "${tA}" vide.`; return;
     }
+    const colsA = Object.keys(rowsA[0]);
 
-    // Build maps for each join
+    // Build join maps
     const maps = [];
     for (const j of state.joins) {
       const tJ = document.getElementById('sel-table-'+j.id)?.value;
       const kJ = document.getElementById('sel-keyJoin-'+j.id)?.value;
       const kM = document.getElementById('sel-keyMain-'+j.id)?.value;
+      const jt = document.getElementById('sel-jtype-'+j.id)?.value;
       if (!tJ || !kJ || !kM) continue;
       const rows = await fetchTableData(tJ);
       const map = {};
-      rows.forEach(r => { if (r[kJ] !== undefined) map[String(r[kJ])] = r; });
-      maps.push({ j, map, tJ, kJ, kM });
+      rows.forEach(r => { if (r[kJ]!==undefined) map[String(r[kJ])] = r; });
+      maps.push({ j, map, tJ, kJ, kM, jt });
     }
 
-    if (!maps.length) {
-      statusEl.className='status s-warn';
-      statusEl.textContent='Aucune jointure valide configurée. Vérifiez les clés.'; return;
-    }
-
+    // Join rows
     let matched = 0, unmatched = 0;
     const joined = [];
-
     for (const rowA of rowsA.slice(0,50)) {
       let skip = false;
-      for (const {j, map, kM} of maps) {
-        const jt = document.getElementById('sel-jtype-'+j.id)?.value;
-        if (!map[String(rowA[kM])] && jt === 'inner') { skip = true; break; }
+      for (const {map, kM, jt} of maps) {
+        if (!map[String(rowA[kM])] && jt==='inner') { skip=true; break; }
       }
       if (skip) { unmatched++; continue; }
       matched++;
-      const out = {};
-      colsA.forEach(c => out[c] = rowA[c]);
-      maps.forEach(({j, map, tJ, kM}) => {
+      const out = {...rowA};
+      maps.forEach(({j, map, kM}) => {
         const found = map[String(rowA[kM])];
         j.cols.filter(c=>c.src).forEach(({src,dest}) => {
-          out[`__j${j.id}__`+(dest||src)] = found ? found[src] : null;
+          out[dest||src] = found ? found[src] : null;
         });
+      });
+      // Eval formula columns
+      state.formulas.filter(f=>f.name&&f.formula).forEach(f => {
+        out[f.name] = evalFormula(f.formula, out);
       });
       joined.push(out);
     }
 
-    const activeCols = maps.flatMap(({j,tJ}) =>
+    // Active join cols
+    const joinCols = maps.flatMap(({j,tJ}) =>
       j.cols.filter(c=>c.src).map(({src,dest}) => ({
-        key:`__j${j.id}__`+(dest||src), label:dest||src, from:tJ, colorIdx:j.colorIdx
+        key:dest||src, label:dest||src, from:tJ, colorIdx:j.colorIdx, type:'join'
       }))
     );
-
-    if (!activeCols.length) {
-      statusEl.className='status s-warn';
-      statusEl.textContent='Ajoutez des colonnes à récupérer dans la configuration.'; return;
-    }
+    const formulaCols = state.formulas.filter(f=>f.name&&f.formula).map(f => ({
+      key:f.name, label:f.name, from:'formule', type:'formula'
+    }));
 
     statusEl.className='status s-ok';
-    statusEl.textContent=`${matched} ligne(s) · ${unmatched ? unmatched+' exclue(s) (INNER JOIN) · ':''} Aperçu limité à 50 lignes`;
+    statusEl.textContent=`${matched} ligne(s) · ${joinCols.length} colonne(s) jointe(s) · ${formulaCols.length} colonne(s) calculée(s)${unmatched?' · '+unmatched+' exclue(s)':''}`;
 
-    const headA = colsA.map(c=>`<th style="background:#eff6ff;color:#2563eb">${c}</th>`).join('');
-    const headJ = activeCols.map(({label,from,colorIdx})=>{
+    const headA = colsA.map(c=>`<th style="background:var(--blue-l);color:var(--blue)">${c}</th>`).join('');
+    const headJ = joinCols.map(({label,from,colorIdx})=>{
       const c=COLORS[colorIdx%COLORS.length];
-      return `<th style="background:${c.bg};color:${c.fg}">${label}<br><span style="font-weight:400;font-size:10px;opacity:.7">← ${from}</span></th>`;
+      return `<th style="background:${c.bg};color:${c.fg}">${label}<br><span style="font-size:10px;font-weight:400;opacity:.7">← ${from}</span></th>`;
     }).join('');
+    const headF = formulaCols.map(({label})=>
+      `<th style="background:var(--purple-l);color:var(--purple)">${label}<br><span style="font-size:10px;font-weight:400;opacity:.7">= formule</span></th>`
+    ).join('');
 
     const bodyRows = joined.map(row=>{
       const tda = colsA.map(c=>`<td>${row[c]??''}</td>`).join('');
-      const tdj = activeCols.map(({key})=>{
+      const tdj = joinCols.map(({key})=>{
         const v=row[key];
         return v!==null&&v!==undefined?`<td>${v}</td>`:`<td class="empty">—</td>`;
       }).join('');
-      return `<tr>${tda}${tdj}</tr>`;
+      const tdf = formulaCols.map(({key})=>{
+        const v=row[key];
+        if (v===undefined||v===null) return `<td class="empty">—</td>`;
+        if (String(v).startsWith('#ERR')) return `<td class="err">${v}</td>`;
+        return `<td>${v}</td>`;
+      }).join('');
+      return `<tr>${tda}${tdj}${tdf}</tr>`;
     }).join('');
 
     container.innerHTML=`<div class="preview-wrap"><table class="pv">
-      <thead><tr>${headA}${headJ}</tr></thead>
+      <thead><tr>${headA}${headJ}${headF}</tr></thead>
       <tbody>${bodyRows}</tbody>
     </table></div>`;
 
@@ -539,53 +636,72 @@ function renderApply() {
   const tA = document.getElementById('sel-tableA').value;
   document.getElementById('apply-tname').textContent = tA;
   let html = '';
+
   state.joins.forEach(j => {
-    const tJ = document.getElementById('sel-table-'+j.id)?.value || '?';
-    const kM = document.getElementById('sel-keyMain-'+j.id)?.value || '?';
-    const kJ = document.getElementById('sel-keyJoin-'+j.id)?.value || '?';
+    const tJ = document.getElementById('sel-table-'+j.id)?.value||'?';
+    const kM = document.getElementById('sel-keyMain-'+j.id)?.value||'?';
+    const kJ = document.getElementById('sel-keyJoin-'+j.id)?.value||'?';
     const c = COLORS[j.colorIdx%COLORS.length];
     j.cols.filter(x=>x.src).forEach(({src,dest})=>{
-      const name = dest||src;
-      const formula = `${tJ}.lookupOne(${kJ}=$${kM}).${src}`;
-      html+=`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6">
-        <span style="background:${c.bg};color:${c.fg};border:1px solid ${c.border};font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;flex:none">${name}</span>
-        <code class="mono" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${formula}</code>
-      </div>`;
+      const name=dest||src;
+      const formula=`${tJ}.lookupOne(${kJ}=$${kM}).${src}`;
+      html+=row(name,formula,c.bg,c.fg,c.border,'jointure');
     });
   });
-  if (!html) html='<p class="small">Aucune colonne configurée.</p>';
-  document.getElementById('apply-list').innerHTML = html;
+
+  state.formulas.filter(f=>f.name&&f.formula).forEach(f=>{
+    html+=row(f.name, f.formula, 'var(--purple-l)','var(--purple)','var(--purple-b)','formule');
+  });
+
+  document.getElementById('apply-list').innerHTML = html||'<p class="small">Aucune colonne configurée.</p>';
   document.getElementById('apply-status').innerHTML = '';
 }
 
-async function applyJoins() {
+function row(name,formula,bg,fg,border,type) {
+  return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f3f4f6">
+    <span class="tag" style="background:${bg};color:${fg};border:1px solid ${border};flex:none">${name}</span>
+    <span style="font-size:10px;color:var(--muted);flex:none">${type}</span>
+    <code class="mono" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">${formula}</code>
+  </div>`;
+}
+
+async function applyAll() {
   const tA = document.getElementById('sel-tableA').value;
-  const existing = state.tables[tA] || [];
+  const existing = state.tables[tA]||[];
   const statusEl = document.getElementById('apply-status');
-  statusEl.className='status s-info';
-  statusEl.textContent='Création en cours…';
+  statusEl.className='status s-info'; statusEl.textContent='Création en cours…';
   let created=0, skipped=0;
+
   try {
+    // Join columns
     for (const j of state.joins) {
-      const tJ = document.getElementById('sel-table-'+j.id)?.value;
-      const kM = document.getElementById('sel-keyMain-'+j.id)?.value;
-      const kJ = document.getElementById('sel-keyJoin-'+j.id)?.value;
+      const tJ=document.getElementById('sel-table-'+j.id)?.value;
+      const kM=document.getElementById('sel-keyMain-'+j.id)?.value;
+      const kJ=document.getElementById('sel-keyJoin-'+j.id)?.value;
       for (const {src,dest} of j.cols.filter(x=>x.src)) {
-        const name = dest||src;
-        if (existing.includes(name)) { skipped++; continue; }
+        const name=dest||src;
+        if (existing.includes(name)){skipped++;continue;}
         await grist.docApi.applyUserActions([
-          ['AddColumn', tA, name, { type:'Any', isFormula:true, formula:`${tJ}.lookupOne(${kJ}=$${kM}).${src}` }]
+          ['AddColumn',tA,name,{type:'Any',isFormula:true,formula:`${tJ}.lookupOne(${kJ}=$${kM}).${src}`}]
         ]);
         created++;
       }
     }
+    // Formula columns
+    for (const f of state.formulas.filter(x=>x.name&&x.formula)) {
+      if (existing.includes(f.name)){skipped++;continue;}
+      const ftype = document.getElementById('ftype-'+f.id)?.value||'Any';
+      await grist.docApi.applyUserActions([
+        ['AddColumn',tA,f.name,{type:ftype,isFormula:true,formula:f.formula}]
+      ]);
+      created++;
+    }
     const rows = await grist.docApi.fetchTable(tA);
     state.tables[tA] = Object.keys(rows).filter(k=>!k.startsWith('gristHelper')&&k!=='manualSort');
     statusEl.className='status s-ok';
-    statusEl.textContent=`${created} colonne(s) créée(s)${skipped?` · ${skipped} ignorée(s) (déjà existante)`:''}`;
+    statusEl.textContent=`${created} colonne(s) créée(s)${skipped?` · ${skipped} ignorée(s)`:''}`;
   } catch(e) {
-    statusEl.className='status s-err';
-    statusEl.textContent='Erreur : '+e.message;
+    statusEl.className='status s-err'; statusEl.textContent='Erreur : '+e.message;
   }
 }
 </script>
