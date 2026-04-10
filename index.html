@@ -211,33 +211,17 @@ function applyConfig(cfg) {
 }
 
 // ── GRIST INIT ───────────────────────────────────────────────────
-grist.ready({ requiredAccess: 'full' });
-grist.on('message', async () => { await init(); });
-
-// Fallback: initialize directly if grist message never fires (e.g. outside iframe)
 let _inited = false;
-async function initOnce() {
-  if (_inited) return;
-  _inited = true;
-  await init();
-}
-// Try after short delay in case grist message fires first
-setTimeout(initOnce, 800);
 
 async function init() {
+  if (_inited) return;
+  _inited = true;
   try {
-    let tables = [];
-    try {
-      tables = await grist.docApi.listTables();
-      state.tableNames = tables;
-      for (const t of tables) {
-        const rows = await grist.docApi.fetchTable(t);
-        state.tables[t] = Object.keys(rows).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
-      }
-    } catch(e) {
-      // Not connected to Grist yet — show UI anyway so user can see the widget
-      state.tableNames = [];
-      state.tables = {};
+    const tables = await grist.docApi.listTables();
+    state.tableNames = tables;
+    for (const t of tables) {
+      const rows = await grist.docApi.fetchTable(t);
+      state.tables[t] = Object.keys(rows).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
     }
     populateMainSelect();
     let saved = null;
@@ -251,6 +235,9 @@ async function init() {
       `<div style="color:var(--red);text-align:center;padding:20px">Erreur : ${e.message}</div>`;
   }
 }
+
+grist.ready({ requiredAccess: 'full' });
+grist.on('message', () => init());
 
 // ── SELECTS ──────────────────────────────────────────────────────
 function populateMainSelect() {
@@ -395,9 +382,28 @@ function switchTab(name) {
 // ── FETCH ─────────────────────────────────────────────────────────
 async function fetchTableData(tableName) {
   const raw = await grist.docApi.fetchTable(tableName);
-  const cols = Object.keys(raw).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
+  // Grist returns column-oriented data: { colId: [val, val, ...], ... }
+  const cols = Object.keys(raw).filter(k =>
+    k !== 'manualSort' && !k.startsWith('gristHelper_')
+  );
+  if (!cols.length) return [];
   const len = raw[cols[0]]?.length || 0;
-  return Array.from({length:len}, (_,i) => Object.fromEntries(cols.map(c => [c, raw[c][i]])));
+  const rows = [];
+  for (let i = 0; i < len; i++) {
+    const row = {};
+    for (const c of cols) row[c] = raw[c][i];
+    rows.push(row);
+  }
+  return rows;
+}
+
+// Also refresh table columns list from live data
+async function refreshTableCols(tableName) {
+  const rows = await grist.docApi.fetchTable(tableName);
+  state.tables[tableName] = Object.keys(rows).filter(k =>
+    k !== 'manualSort' && !k.startsWith('gristHelper_')
+  );
+  return state.tables[tableName];
 }
 
 // ── PREVIEW ──────────────────────────────────────────────────────
@@ -416,16 +422,29 @@ async function renderPreview() {
   try {
     const rowsA = await fetchTableData(tA);
     const colsA = Object.keys(rowsA[0] || {});
+    statusEl.textContent = `Table principale "${tA}" : ${rowsA.length} lignes, colonnes : ${colsA.join(', ')}`;
+
+    if (!rowsA.length) {
+      statusEl.className='status s-warn';
+      statusEl.textContent=`La table "${tA}" est vide ou inaccessible.`; return;
+    }
 
     // Build maps for each join
     const maps = [];
     for (const j of state.joins) {
       const tJ = document.getElementById('sel-table-'+j.id)?.value;
       const kJ = document.getElementById('sel-keyJoin-'+j.id)?.value;
+      const kM = document.getElementById('sel-keyMain-'+j.id)?.value;
+      if (!tJ || !kJ || !kM) continue;
       const rows = await fetchTableData(tJ);
       const map = {};
-      rows.forEach(r => { if (r[kJ] !== undefined) map[r[kJ]] = r; });
-      maps.push({ j, map, tJ, kJ });
+      rows.forEach(r => { if (r[kJ] !== undefined) map[String(r[kJ])] = r; });
+      maps.push({ j, map, tJ, kJ, kM });
+    }
+
+    if (!maps.length) {
+      statusEl.className='status s-warn';
+      statusEl.textContent='Aucune jointure valide configurée. Vérifiez les clés.'; return;
     }
 
     let matched = 0, unmatched = 0;
@@ -433,18 +452,16 @@ async function renderPreview() {
 
     for (const rowA of rowsA.slice(0,50)) {
       let skip = false;
-      for (const {j, map} of maps) {
-        const kM = document.getElementById('sel-keyMain-'+j.id)?.value;
+      for (const {j, map, kM} of maps) {
         const jt = document.getElementById('sel-jtype-'+j.id)?.value;
-        if (!map[rowA[kM]] && jt === 'inner') { skip = true; break; }
+        if (!map[String(rowA[kM])] && jt === 'inner') { skip = true; break; }
       }
       if (skip) { unmatched++; continue; }
       matched++;
       const out = {};
       colsA.forEach(c => out[c] = rowA[c]);
-      maps.forEach(({j, map, tJ}) => {
-        const kM = document.getElementById('sel-keyMain-'+j.id)?.value;
-        const found = map[rowA[kM]];
+      maps.forEach(({j, map, tJ, kM}) => {
+        const found = map[String(rowA[kM])];
         j.cols.filter(c=>c.src).forEach(({src,dest}) => {
           out[`__j${j.id}__`+(dest||src)] = found ? found[src] : null;
         });
