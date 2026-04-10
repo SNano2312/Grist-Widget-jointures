@@ -7,225 +7,160 @@
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 <style>
   :root {
-    --blue: #2563eb; --blue-light: #eff6ff; --blue-border: #bfdbfe;
-    --green: #16a34a; --green-light: #f0fdf4; --green-border: #bbf7d0;
-    --orange: #ea580c; --orange-light: #fff7ed; --orange-border: #fed7aa;
-    --gray: #6b7280; --gray-light: #f9fafb; --gray-border: #e5e7eb;
-    --text: #111827; --text-muted: #6b7280;
-    --radius: 8px; --radius-sm: 5px;
+    --blue:#2563eb;--blue-l:#eff6ff;--blue-b:#bfdbfe;
+    --gray:#6b7280;--gray-l:#f9fafb;--gray-b:#e5e7eb;
+    --green:#16a34a;--green-l:#f0fdf4;--green-b:#bbf7d0;
+    --red:#dc2626;--red-l:#fef2f2;--red-b:#fecaca;
+    --text:#111827;--muted:#6b7280;
+    --r:8px;--rs:5px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: var(--text); background: #fff; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:var(--text);background:#fff;}
+  #app{display:flex;flex-direction:column;height:100vh;}
 
-  #app { display: flex; flex-direction: column; height: 100vh; }
+  .tabs{display:flex;border-bottom:1px solid var(--gray-b);background:var(--gray-l);}
+  .tab{padding:10px 18px;cursor:pointer;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500;background:#fff;}
 
-  /* TABS */
-  .tabs { display: flex; border-bottom: 1px solid var(--gray-border); background: var(--gray-light); }
-  .tab { padding: 10px 18px; cursor: pointer; font-size: 13px; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
-  .tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 500; background: #fff; }
+  .panel{display:none;flex:1;overflow-y:auto;padding:16px;}
+  .panel.active{display:block;}
 
-  /* PANELS */
-  .panel { display: none; flex: 1; overflow-y: auto; padding: 16px; }
-  .panel.active { display: block; }
+  .card{border:1px solid var(--gray-b);border-radius:var(--r);padding:14px;margin-bottom:12px;background:#fff;}
+  .card-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+  .card-title{font-weight:500;font-size:13px;color:var(--text);}
 
-  /* SECTION HEADERS */
-  .section-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
-  .badge-a { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-border); }
-  .badge-b { background: var(--green-light); color: var(--green); border: 1px solid var(--green-border); }
-  .badge-c { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange-border); }
+  label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;}
+  select,input[type=text]{width:100%;padding:7px 10px;border:1px solid var(--gray-b);border-radius:var(--rs);font-size:13px;color:var(--text);background:#fff;}
+  select:focus,input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.1);}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .g3{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;}
 
-  /* CARDS */
-  .card { border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; background: #fff; }
-  .card-title { font-weight: 500; font-size: 13px; margin-bottom: 10px; color: var(--text); }
+  .btn{padding:7px 14px;border-radius:var(--rs);font-size:13px;cursor:pointer;border:1px solid var(--gray-b);background:#fff;color:var(--text);}
+  .btn:hover{background:var(--gray-l);}
+  .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .btn-primary:hover{background:#1d4ed8;}
+  .btn-success{background:var(--green);color:#fff;border-color:var(--green);}
+  .btn-success:hover{background:#15803d;}
+  .btn-danger{background:var(--red-l);color:var(--red);border-color:var(--red-b);}
+  .btn-danger:hover{background:#fee2e2;}
+  .btn-sm{padding:4px 10px;font-size:12px;}
+  .btn-icon{padding:3px 7px;font-size:13px;border:none;background:none;cursor:pointer;color:var(--muted);}
+  .btn-icon:hover{color:var(--red);}
+  .btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;}
 
-  /* FORM ELEMENTS */
-  label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-  select, input[type=text] { width: 100%; padding: 7px 10px; border: 1px solid var(--gray-border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text); background: #fff; }
-  select:focus, input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .grid3 { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; }
+  /* JOIN BLOCK */
+  .join-block{position:relative;border:1px solid var(--gray-b);border-radius:var(--r);padding:14px;margin-bottom:8px;background:#fff;}
+  .join-block-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+  .join-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none;}
+  .join-remove{margin-left:auto;padding:3px 8px;font-size:12px;border:1px solid var(--red-b);border-radius:var(--rs);background:var(--red-l);color:var(--red);cursor:pointer;}
+  .join-remove:hover{background:#fee2e2;}
 
-  /* BUTTONS */
-  .btn { padding: 7px 14px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; border: 1px solid var(--gray-border); background: #fff; color: var(--text); }
-  .btn:hover { background: var(--gray-light); }
-  .btn-primary { background: var(--blue); color: #fff; border-color: var(--blue); }
-  .btn-primary:hover { background: #1d4ed8; }
-  .btn-success { background: var(--green); color: #fff; border-color: var(--green); }
-  .btn-success:hover { background: #15803d; }
-  .btn-sm { padding: 4px 10px; font-size: 12px; }
-  .btn-icon { padding: 4px 8px; font-size: 14px; border: none; background: none; cursor: pointer; color: var(--text-muted); }
-  .btn-icon:hover { color: #ef4444; }
-  .btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .join-connector{display:flex;align-items:center;gap:10px;margin:0 0 8px 20px;}
+  .join-line{width:2px;height:28px;background:var(--gray-b);border-radius:2px;}
+  .join-type-sel{width:auto;padding:3px 8px;font-size:11px;border:1px solid var(--gray-b);border-radius:var(--rs);}
 
-  /* COL ROWS */
-  .col-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; }
-  .col-row-head { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-bottom: 4px; }
-  .col-row-head span { font-size: 11px; color: var(--text-muted); }
+  .col-head{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:4px;}
+  .col-head span{font-size:11px;color:var(--muted);}
+  .col-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;margin-bottom:6px;}
 
-  /* STATUS */
-  .status { padding: 8px 12px; border-radius: var(--radius-sm); font-size: 12px; margin-bottom: 10px; }
-  .status-info { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-border); }
-  .status-success { background: var(--green-light); color: var(--green); border: 1px solid var(--green-border); }
-  .status-warn { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange-border); }
-  .status-error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .status{padding:8px 12px;border-radius:var(--rs);font-size:12px;margin-bottom:10px;}
+  .s-info{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-b);}
+  .s-ok{background:var(--green-l);color:var(--green);border:1px solid var(--green-b);}
+  .s-warn{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;}
+  .s-err{background:var(--red-l);color:var(--red);border:1px solid var(--red-b);}
 
-  /* PREVIEW TABLE */
-  .preview-wrap { overflow-x: auto; margin-top: 10px; border: 1px solid var(--gray-border); border-radius: var(--radius); }
-  table.preview { width: 100%; border-collapse: collapse; font-size: 12px; }
-  table.preview th { background: var(--gray-light); padding: 7px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid var(--gray-border); white-space: nowrap; }
-  table.preview td { padding: 6px 10px; border-bottom: 1px solid #f3f4f6; }
-  table.preview tr:last-child td { border-bottom: none; }
-  table.preview th.col-a { background: var(--blue-light); color: var(--blue); }
-  table.preview th.col-b { background: var(--green-light); color: var(--green); }
-  table.preview th.col-c { background: var(--orange-light); color: var(--orange); }
-  table.preview td.empty { color: #d1d5db; font-style: italic; }
+  .preview-wrap{overflow-x:auto;border:1px solid var(--gray-b);border-radius:var(--r);}
+  table.pv{width:100%;border-collapse:collapse;font-size:12px;}
+  table.pv th{background:var(--gray-l);padding:7px 10px;text-align:left;font-weight:500;border-bottom:1px solid var(--gray-b);white-space:nowrap;}
+  table.pv td{padding:6px 10px;border-bottom:1px solid #f3f4f6;}
+  table.pv tr:last-child td{border-bottom:none;}
+  table.pv td.empty{color:#d1d5db;font-style:italic;}
 
-  /* SEPARATOR */
-  .join-sep { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px 0; }
-  .join-sep-line { flex: 1; height: 1px; background: var(--gray-border); }
-  .join-sep select { width: auto; padding: 3px 8px; font-size: 11px; }
+  .palette{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;}
+  .swatch{width:16px;height:16px;border-radius:3px;}
 
-  /* LOADING */
-  #loading { display: flex; align-items: center; justify-content: center; height: 100vh; color: var(--text-muted); gap: 8px; font-size: 13px; }
-  .spinner { width: 18px; height: 18px; border: 2px solid var(--gray-border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading{display:flex;align-items:center;justify-content:center;height:100vh;color:var(--muted);gap:8px;}
+  .spin{width:18px;height:18px;border:2px solid var(--gray-b);border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg);}}
 
-  .divider { border: none; border-top: 1px solid var(--gray-border); margin: 14px 0; }
-  .small { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-  .mono { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; background: var(--gray-light); padding: 2px 6px; border-radius: 4px; }
-  strong { font-weight: 500; }
+  hr.div{border:none;border-top:1px solid var(--gray-b);margin:12px 0;}
+  .mono{font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;background:var(--gray-l);padding:2px 6px;border-radius:4px;}
+  .small{font-size:11px;color:var(--muted);margin-top:4px;}
 </style>
 </head>
 <body>
 
-<div id="loading">
-  <div class="spinner"></div>
-  Connexion à Grist…
-</div>
+<div id="loading"><div class="spin"></div>Connexion à Grist…</div>
 
 <div id="app" style="display:none">
   <div class="tabs">
     <div class="tab active" onclick="switchTab('config')">Configuration</div>
-    <div class="tab" onclick="switchTab('preview')">Aperçu des données</div>
+    <div class="tab" onclick="switchTab('preview')">Aperçu</div>
     <div class="tab" onclick="switchTab('apply')">Appliquer</div>
   </div>
 
-  <!-- TAB CONFIG -->
+  <!-- CONFIG -->
   <div class="panel active" id="tab-config">
-
-    <div class="card">
-      <div class="section-head">
-        <span class="badge badge-a">TABLE PRINCIPALE</span>
+    <div class="card" id="card-main">
+      <div class="card-head">
+        <div class="join-num" style="background:#eff6ff;color:#2563eb">A</div>
+        <span class="card-title">Table principale</span>
       </div>
-      <div class="grid2">
-        <div>
-          <label>Table principale</label>
-          <select id="sel-tableA" onchange="onTableAChange()"></select>
-        </div>
-        <div>
-          <label>Colonne clé vers B (client_id…)</label>
-          <select id="sel-keyA_B" onchange="saveConfig()"></select>
-        </div>
-      </div>
-      <div style="margin-top:10px">
-        <label>Colonne clé vers C</label>
-        <select id="sel-keyA_C" onchange="saveConfig()"></select>
+      <div>
+        <label>Table</label>
+        <select id="sel-tableA" onchange="onTableAChange()"></select>
       </div>
     </div>
 
-    <div class="join-sep">
-      <div class="join-sep-line"></div>
-      <select id="join-type-b" onchange="renderPreview(); saveConfig()">
-        <option value="left">LEFT JOIN</option>
-        <option value="inner">INNER JOIN</option>
-      </select>
-      <div class="join-sep-line"></div>
-    </div>
-
-    <div class="card">
-      <div class="section-head">
-        <span class="badge badge-b">TABLE B</span>
-      </div>
-      <div class="grid2">
-        <div>
-          <label>Table B</label>
-          <select id="sel-tableB" onchange="onTableBChange()"></select>
-        </div>
-        <div>
-          <label>Clé dans B</label>
-          <select id="sel-keyB" onchange="saveConfig()"></select>
-        </div>
-      </div>
-      <hr class="divider">
-      <div class="card-title">Colonnes à récupérer depuis B</div>
-      <div class="col-row-head"><span>Colonne dans B</span><span>Nom dans table principale</span><span></span></div>
-      <div id="cols-b-list"></div>
-      <button class="btn btn-sm" onclick="addColRow('b')">+ Ajouter colonne</button>
-    </div>
-
-    <div class="join-sep">
-      <div class="join-sep-line"></div>
-      <select id="join-type-c" onchange="renderPreview(); saveConfig()">
-        <option value="left">LEFT JOIN</option>
-        <option value="inner">INNER JOIN</option>
-      </select>
-      <div class="join-sep-line"></div>
-    </div>
-
-    <div class="card">
-      <div class="section-head">
-        <span class="badge badge-c">TABLE C</span>
-      </div>
-      <div class="grid2">
-        <div>
-          <label>Table C</label>
-          <select id="sel-tableC" onchange="onTableCChange()"></select>
-        </div>
-        <div>
-          <label>Clé dans C</label>
-          <select id="sel-keyC" onchange="saveConfig()"></select>
-        </div>
-      </div>
-      <hr class="divider">
-      <div class="card-title">Colonnes à récupérer depuis C</div>
-      <div class="col-row-head"><span>Colonne dans C</span><span>Nom dans table principale</span><span></span></div>
-      <div id="cols-c-list"></div>
-      <button class="btn btn-sm" onclick="addColRow('c')">+ Ajouter colonne</button>
-    </div>
+    <div id="joins-container"></div>
 
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="switchTab('preview'); renderPreview()">Voir l'aperçu →</button>
+      <button class="btn btn-sm btn-primary" onclick="addJoin()">+ Ajouter une jointure</button>
+      <button class="btn btn-sm" onclick="switchTab('preview'); renderPreview()">Aperçu →</button>
     </div>
   </div>
 
-  <!-- TAB PREVIEW -->
+  <!-- PREVIEW -->
   <div class="panel" id="tab-preview">
-    <div id="preview-status" class="status status-info">Configurez les tables puis revenez ici.</div>
-    <div id="preview-container"></div>
+    <div id="prev-status" class="status s-info">Configurez les tables puis lancez l'aperçu.</div>
+    <div id="prev-container"></div>
   </div>
 
-  <!-- TAB APPLY -->
+  <!-- APPLY -->
   <div class="panel" id="tab-apply">
     <div class="card">
-      <div class="card-title">Colonnes qui seront créées dans <span id="apply-table-name" style="color:var(--blue)">—</span></div>
-      <div id="apply-col-list" style="margin-bottom:12px"></div>
+      <div class="card-title" style="margin-bottom:12px">
+        Colonnes à créer dans <span id="apply-tname" style="color:var(--blue)">—</span>
+      </div>
+      <div id="apply-list"></div>
       <div id="apply-status"></div>
-      <div class="btn-row">
+      <div class="btn-row" style="margin-top:12px">
         <button class="btn btn-success" onclick="applyJoins()">Créer les colonnes dans Grist</button>
       </div>
-      <p class="small" style="margin-top:10px">Les colonnes de formule seront ajoutées à votre table principale. Si une colonne du même nom existe déjà, elle sera ignorée.</p>
+      <p class="small">Les colonnes déjà existantes seront ignorées.</p>
     </div>
   </div>
 </div>
 
 <script>
+// ── PALETTE ──────────────────────────────────────────────────────
+const COLORS = [
+  {bg:'#f0fdf4',fg:'#16a34a',border:'#bbf7d0',label:'B'},
+  {bg:'#fff7ed',fg:'#ea580c',border:'#fed7aa',label:'C'},
+  {bg:'#fdf4ff',fg:'#9333ea',border:'#e9d5ff',label:'D'},
+  {bg:'#fefce8',fg:'#ca8a04',border:'#fde68a',label:'E'},
+  {bg:'#f0f9ff',fg:'#0284c7',border:'#bae6fd',label:'F'},
+  {bg:'#fff1f2',fg:'#e11d48',border:'#fecdd3',label:'G'},
+  {bg:'#f5f3ff',fg:'#7c3aed',border:'#ddd6fe',label:'H'},
+  {bg:'#ecfdf5',fg:'#059669',border:'#a7f3d0',label:'I'},
+];
+
 // ── STATE ────────────────────────────────────────────────────────
 const state = {
   tables: {},
   tableNames: [],
-  colsB: [{ src: '', dest: '' }],
-  colsC: [{ src: '', dest: '' }],
+  // joins: array of { tableKey, keyInMain, keyInJoin, joinType, cols:[{src,dest}] }
+  joins: [],
 };
 
 // ── PERSISTENCE ──────────────────────────────────────────────────
@@ -233,26 +168,22 @@ async function saveConfig() {
   try {
     const cfg = {
       tableA: document.getElementById('sel-tableA').value,
-      tableB: document.getElementById('sel-tableB').value,
-      tableC: document.getElementById('sel-tableC').value,
-      keyA_B: document.getElementById('sel-keyA_B').value,
-      keyA_C: document.getElementById('sel-keyA_C').value,
-      keyB:   document.getElementById('sel-keyB').value,
-      keyC:   document.getElementById('sel-keyC').value,
-      joinB:  document.getElementById('join-type-b').value,
-      joinC:  document.getElementById('join-type-c').value,
-      colsB:  state.colsB,
-      colsC:  state.colsC,
+      joins: state.joins.map(j => ({
+        tableKey: document.getElementById('sel-table-'+j.id)?.value,
+        keyInMain: document.getElementById('sel-keyMain-'+j.id)?.value,
+        keyInJoin: document.getElementById('sel-keyJoin-'+j.id)?.value,
+        joinType:  document.getElementById('sel-jtype-'+j.id)?.value,
+        cols: j.cols,
+      })),
     };
-    await grist.setOption('joinConfig', JSON.stringify(cfg));
+    await grist.setOption('joinConfigV2', JSON.stringify(cfg));
   } catch(e) {}
 }
 
 async function loadConfig() {
   try {
-    const raw = await grist.getOption('joinConfig');
-    if (!raw) return null;
-    return JSON.parse(raw);
+    const raw = await grist.getOption('joinConfigV2');
+    return raw ? JSON.parse(raw) : null;
   } catch(e) { return null; }
 }
 
@@ -260,27 +191,28 @@ function applyConfig(cfg) {
   if (!cfg) return;
   const setVal = (id, val) => {
     const el = document.getElementById(id);
-    if (el && val !== undefined && [...el.options].some(o => o.value === val)) el.value = val;
+    if (!el || val === undefined) return;
+    if ([...el.options].some(o => o.value === val)) el.value = val;
   };
-  setVal('sel-tableA', cfg.tableA); onTableAChange();
-  setVal('sel-tableB', cfg.tableB); onTableBChange();
-  setVal('sel-tableC', cfg.tableC); onTableCChange();
-  setVal('sel-keyA_B', cfg.keyA_B);
-  setVal('sel-keyA_C', cfg.keyA_C);
-  setVal('sel-keyB', cfg.keyB);
-  setVal('sel-keyC', cfg.keyC);
-  if (cfg.joinB) document.getElementById('join-type-b').value = cfg.joinB;
-  if (cfg.joinC) document.getElementById('join-type-c').value = cfg.joinC;
-  if (cfg.colsB?.length) { state.colsB = cfg.colsB; renderColRows('b'); }
-  if (cfg.colsC?.length) { state.colsC = cfg.colsC; renderColRows('c'); }
+  setVal('sel-tableA', cfg.tableA);
+  onTableAChange(true);
+  state.joins = [];
+  document.getElementById('joins-container').innerHTML = '';
+  (cfg.joins || []).forEach(j => {
+    const id = addJoin(true);
+    setVal('sel-table-'+id, j.tableKey);
+    onJoinTableChange(id, true);
+    setVal('sel-keyMain-'+id, j.keyInMain);
+    setVal('sel-keyJoin-'+id, j.keyInJoin);
+    if (j.joinType) document.getElementById('sel-jtype-'+id).value = j.joinType;
+    const jObj = state.joins.find(x => x.id === id);
+    if (jObj && j.cols?.length) { jObj.cols = j.cols; renderColRows(id); }
+  });
 }
 
 // ── GRIST INIT ───────────────────────────────────────────────────
 grist.ready({ requiredAccess: 'full' });
-
-grist.on('message', async () => {
-  await init();
-});
+grist.on('message', async () => { await init(); });
 
 async function init() {
   try {
@@ -290,273 +222,310 @@ async function init() {
       const rows = await grist.docApi.fetchTable(t);
       state.tables[t] = Object.keys(rows).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
     }
-    populateSelects();
+    populateMainSelect();
     const saved = await loadConfig();
-    if (saved) applyConfig(saved);
+    if (saved) { applyConfig(saved); }
+    else { addJoin(); }
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
-  } catch (e) {
-    document.getElementById('loading').innerHTML = `<div style="color:#dc2626;text-align:center;padding:20px">
-      Erreur de connexion à Grist.<br><span style="font-size:11px;color:#6b7280">${e.message}</span>
-    </div>`;
+  } catch(e) {
+    document.getElementById('loading').innerHTML =
+      `<div style="color:var(--red);text-align:center;padding:20px">Erreur : ${e.message}</div>`;
   }
 }
 
 // ── SELECTS ──────────────────────────────────────────────────────
-function populateSelects() {
-  const names = state.tableNames;
-  ['sel-tableA','sel-tableB','sel-tableC'].forEach((id, i) => {
-    const sel = document.getElementById(id);
-    sel.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('');
-    if (names[i]) sel.value = names[i];
+function populateMainSelect() {
+  const sel = document.getElementById('sel-tableA');
+  sel.innerHTML = state.tableNames.map(n => `<option value="${n}">${n}</option>`).join('');
+}
+
+function fillSelect(id, cols, currentVal) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = cols.map(c => `<option value="${c}">${c}</option>`).join('');
+  if (currentVal && [...el.options].some(o => o.value === currentVal)) el.value = currentVal;
+}
+
+function onTableAChange(silent) {
+  // nothing extra needed for main table — keys are populated per join
+  if (!silent) saveConfig();
+}
+
+function onJoinTableChange(id, silent) {
+  const t = document.getElementById('sel-table-'+id)?.value;
+  if (!t) return;
+  const mainCols = state.tables[document.getElementById('sel-tableA').value] || [];
+  const joinCols = state.tables[t] || [];
+  fillSelect('sel-keyMain-'+id, mainCols);
+  fillSelect('sel-keyJoin-'+id, joinCols);
+  renderColRows(id);
+  if (!silent) saveConfig();
+}
+
+// ── JOIN BLOCKS ──────────────────────────────────────────────────
+let _jid = 0;
+function addJoin(silent) {
+  const id = ++_jid;
+  const colorIdx = (state.joins.length) % COLORS.length;
+  const color = COLORS[colorIdx];
+  state.joins.push({ id, cols: [{ src: '', dest: '' }], colorIdx });
+
+  const mainTable = document.getElementById('sel-tableA').value;
+  const mainCols = state.tables[mainTable] || [];
+  const tableOptions = state.tableNames.map(n => `<option value="${n}">${n}</option>`).join('');
+  const colOptions = mainCols.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  const html = `
+  <div class="join-connector" id="conn-${id}">
+    <div class="join-line"></div>
+    <select class="join-type-sel" id="sel-jtype-${id}" onchange="saveConfig()">
+      <option value="left">LEFT JOIN</option>
+      <option value="inner">INNER JOIN</option>
+    </select>
+  </div>
+  <div class="join-block" id="jblock-${id}">
+    <div class="join-block-head">
+      <div class="join-num" style="background:${color.bg};color:${color.fg};border:1px solid ${color.border}">${color.label}</div>
+      <span class="card-title">Jointure ${state.joins.length}</span>
+      <button class="join-remove" onclick="removeJoin(${id})">Supprimer</button>
+    </div>
+    <div class="g2" style="margin-bottom:10px">
+      <div>
+        <label>Table à joindre</label>
+        <select id="sel-table-${id}" onchange="onJoinTableChange(${id})">${tableOptions}</select>
+      </div>
+      <div>
+        <label>Clé dans la table principale</label>
+        <select id="sel-keyMain-${id}" onchange="saveConfig()">${colOptions}</select>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label>Clé dans cette table</label>
+      <select id="sel-keyJoin-${id}" onchange="saveConfig()"></select>
+    </div>
+    <hr class="div">
+    <div class="card-title" style="margin-bottom:8px">Colonnes à récupérer</div>
+    <div class="col-head"><span>Colonne source</span><span>Nom dans table principale</span><span></span></div>
+    <div id="colrows-${id}"></div>
+    <button class="btn btn-sm" onclick="addColRow(${id})">+ Colonne</button>
+  </div>`;
+
+  document.getElementById('joins-container').insertAdjacentHTML('beforeend', html);
+  onJoinTableChange(id, true);
+  if (!silent) saveConfig();
+  return id;
+}
+
+function removeJoin(id) {
+  state.joins = state.joins.filter(j => j.id !== id);
+  document.getElementById('jblock-'+id)?.remove();
+  document.getElementById('conn-'+id)?.remove();
+  // Re-label remaining joins
+  state.joins.forEach((j, i) => {
+    const head = document.querySelector(`#jblock-${j.id} .card-title`);
+    if (head) head.textContent = `Jointure ${i+1}`;
   });
-  onTableAChange(); onTableBChange(); onTableCChange();
-  renderColRows('b'); renderColRows('c');
-}
-
-function fillColSelect(selId, tableName) {
-  const sel = document.getElementById(selId);
-  const cols = state.tables[tableName] || [];
-  sel.innerHTML = cols.map(c => `<option value="${c}">${c}</option>`).join('');
-}
-
-function onTableAChange() {
-  const t = document.getElementById('sel-tableA').value;
-  fillColSelect('sel-keyA_B', t);
-  fillColSelect('sel-keyA_C', t);
   saveConfig();
 }
-function onTableBChange() { fillColSelect('sel-keyB', document.getElementById('sel-tableB').value); saveConfig(); }
-function onTableCChange() { fillColSelect('sel-keyC', document.getElementById('sel-tableC').value); saveConfig(); }
 
 // ── COL ROWS ─────────────────────────────────────────────────────
-function addColRow(t) {
-  state['cols'+t.toUpperCase()].push({ src: '', dest: '' });
-  renderColRows(t);
+function addColRow(id) {
+  const j = state.joins.find(x => x.id === id);
+  if (!j) return;
+  j.cols.push({ src: '', dest: '' });
+  renderColRows(id);
   saveConfig();
 }
 
-function removeColRow(t, i) {
-  state['cols'+t.toUpperCase()].splice(i, 1);
-  renderColRows(t);
+function removeColRow(id, i) {
+  const j = state.joins.find(x => x.id === id);
+  if (!j) return;
+  j.cols.splice(i, 1);
+  renderColRows(id);
   saveConfig();
 }
 
-function renderColRows(t) {
-  const arr = state['cols'+t.toUpperCase()];
-  const tableKey = t === 'b' ? 'sel-tableB' : 'sel-tableC';
-  const tableName = document.getElementById(tableKey).value;
-  const cols = state.tables[tableName] || [];
-  const container = document.getElementById('cols-'+t+'-list');
-  container.innerHTML = arr.map((row, i) => `
+function renderColRows(id) {
+  const j = state.joins.find(x => x.id === id);
+  const container = document.getElementById('colrows-'+id);
+  if (!j || !container) return;
+  const tname = document.getElementById('sel-table-'+id)?.value;
+  const cols = state.tables[tname] || [];
+  container.innerHTML = j.cols.map((row, i) => `
     <div class="col-row">
-      <select onchange="state.cols${t.toUpperCase()}[${i}].src=this.value; renderPreview()">
+      <select onchange="state.joins.find(x=>x.id===${id}).cols[${i}].src=this.value;saveConfig()">
         <option value="">— choisir —</option>
-        ${cols.map(c => `<option value="${c}" ${row.src===c?'selected':''}>${c}</option>`).join('')}
+        ${cols.map(c => `<option value="${c}"${row.src===c?' selected':''}>${c}</option>`).join('')}
       </select>
       <input type="text" placeholder="nom_dans_principale" value="${row.dest}"
-        oninput="state.cols${t.toUpperCase()}[${i}].dest=this.value; saveConfig()" />
-      <button class="btn-icon" onclick="removeColRow('${t}',${i})">✕</button>
+        oninput="state.joins.find(x=>x.id===${id}).cols[${i}].dest=this.value;saveConfig()" />
+      <button class="btn-icon" onclick="removeColRow(${id},${i})">✕</button>
     </div>`).join('');
 }
 
 // ── TABS ─────────────────────────────────────────────────────────
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    t.classList.toggle('active', ['config','preview','apply'][i] === name);
-  });
-  document.querySelectorAll('.panel').forEach((p,i) => {
-    p.classList.toggle('active', ['tab-config','tab-preview','tab-apply'][i] === 'tab-'+name);
-  });
-  if (name === 'apply') renderApply();
-  if (name === 'preview') renderPreview();
+  document.querySelectorAll('.tab').forEach((t,i) =>
+    t.classList.toggle('active', ['config','preview','apply'][i]===name));
+  document.querySelectorAll('.panel').forEach((p,i) =>
+    p.classList.toggle('active', ['tab-config','tab-preview','tab-apply'][i]==='tab-'+name));
+  if (name==='preview') renderPreview();
+  if (name==='apply') renderApply();
 }
 
-// ── FETCH DATA ───────────────────────────────────────────────────
+// ── FETCH ─────────────────────────────────────────────────────────
 async function fetchTableData(tableName) {
   const raw = await grist.docApi.fetchTable(tableName);
   const cols = Object.keys(raw).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
   const len = raw[cols[0]]?.length || 0;
-  const rows = [];
-  for (let i = 0; i < len; i++) {
-    const row = {};
-    cols.forEach(c => row[c] = raw[c][i]);
-    rows.push(row);
-  }
-  return rows;
+  return Array.from({length:len}, (_,i) => Object.fromEntries(cols.map(c => [c, raw[c][i]])));
 }
 
 // ── PREVIEW ──────────────────────────────────────────────────────
 async function renderPreview() {
-  const statusEl = document.getElementById('preview-status');
-  const container = document.getElementById('preview-container');
-  statusEl.className = 'status status-info';
-  statusEl.textContent = 'Chargement des données…';
+  const statusEl = document.getElementById('prev-status');
+  const container = document.getElementById('prev-container');
+  statusEl.className = 'status s-info';
+  statusEl.textContent = 'Chargement…';
   container.innerHTML = '';
 
   const tA = document.getElementById('sel-tableA').value;
-  const tB = document.getElementById('sel-tableB').value;
-  const tC = document.getElementById('sel-tableC').value;
-  const kA_B = document.getElementById('sel-keyA_B').value;
-  const kA_C = document.getElementById('sel-keyA_C').value;
-  const kB = document.getElementById('sel-keyB').value;
-  const kC = document.getElementById('sel-keyC').value;
-  const joinB = document.getElementById('join-type-b').value;
-  const joinC = document.getElementById('join-type-c').value;
+  if (!tA || !state.joins.length) {
+    statusEl.textContent = 'Ajoutez au moins une jointure.'; return;
+  }
 
   try {
-    const [rowsA, rowsB, rowsC] = await Promise.all([
-      fetchTableData(tA), fetchTableData(tB), fetchTableData(tC)
-    ]);
+    const rowsA = await fetchTableData(tA);
+    const colsA = Object.keys(rowsA[0] || {});
 
-    // Build lookup maps
-    const mapB = {};
-    rowsB.forEach(r => { if (r[kB] !== undefined) mapB[r[kB]] = r; });
-    const mapC = {};
-    rowsC.forEach(r => { if (r[kC] !== undefined) mapC[r[kC]] = r; });
-
-    // Active col configs
-    const activB = state.colsB.filter(c => c.src);
-    const activC = state.colsC.filter(c => c.src);
-
-    if (!activB.length && !activC.length) {
-      statusEl.className = 'status status-warn';
-      statusEl.textContent = 'Ajoutez au moins une colonne à récupérer dans la configuration.';
-      return;
+    // Build maps for each join
+    const maps = [];
+    for (const j of state.joins) {
+      const tJ = document.getElementById('sel-table-'+j.id)?.value;
+      const kJ = document.getElementById('sel-keyJoin-'+j.id)?.value;
+      const rows = await fetchTableData(tJ);
+      const map = {};
+      rows.forEach(r => { if (r[kJ] !== undefined) map[r[kJ]] = r; });
+      maps.push({ j, map, tJ, kJ });
     }
 
-    // Joined rows (max 50 for preview)
-    const colsA = Object.keys(rowsA[0] || {});
-    const joined = [];
     let matched = 0, unmatched = 0;
+    const joined = [];
 
-    for (const rowA of rowsA.slice(0, 50)) {
-      const rowB = mapB[rowA[kA_B]];
-      const rowC = mapC[rowA[kA_C]];
-      if (!rowB && joinB === 'inner') { unmatched++; continue; }
-      if (!rowC && joinC === 'inner') { unmatched++; continue; }
+    for (const rowA of rowsA.slice(0,50)) {
+      let skip = false;
+      for (const {j, map} of maps) {
+        const kM = document.getElementById('sel-keyMain-'+j.id)?.value;
+        const jt = document.getElementById('sel-jtype-'+j.id)?.value;
+        if (!map[rowA[kM]] && jt === 'inner') { skip = true; break; }
+      }
+      if (skip) { unmatched++; continue; }
       matched++;
       const out = {};
       colsA.forEach(c => out[c] = rowA[c]);
-      activB.forEach(({ src, dest }) => { out['__b__'+(dest||src)] = rowB ? rowB[src] : null; });
-      activC.forEach(({ src, dest }) => { out['__c__'+(dest||src)] = rowC ? rowC[src] : null; });
+      maps.forEach(({j, map, tJ}) => {
+        const kM = document.getElementById('sel-keyMain-'+j.id)?.value;
+        const found = map[rowA[kM]];
+        j.cols.filter(c=>c.src).forEach(({src,dest}) => {
+          out[`__j${j.id}__`+(dest||src)] = found ? found[src] : null;
+        });
+      });
       joined.push(out);
     }
 
-    statusEl.className = 'status status-success';
-    statusEl.textContent = `${matched} ligne(s) jointe(s) affichées${unmatched ? ` · ${unmatched} exclue(s) (INNER JOIN sans correspondance)` : ''} · Aperçu limité à 50 lignes`;
+    const activeCols = maps.flatMap(({j,tJ}) =>
+      j.cols.filter(c=>c.src).map(({src,dest}) => ({
+        key:`__j${j.id}__`+(dest||src), label:dest||src, from:tJ, colorIdx:j.colorIdx
+      }))
+    );
 
-    // Build table
-    const headA = colsA.map(c => `<th class="col-a">${c}</th>`).join('');
-    const headB = activB.map(({ src, dest }) => `<th class="col-b">${dest||src}<br><span style="font-weight:400;font-size:10px;opacity:.7">← ${tB}.${src}</span></th>`).join('');
-    const headC = activC.map(({ src, dest }) => `<th class="col-c">${dest||src}<br><span style="font-weight:400;font-size:10px;opacity:.7">← ${tC}.${src}</span></th>`).join('');
+    if (!activeCols.length) {
+      statusEl.className='status s-warn';
+      statusEl.textContent='Ajoutez des colonnes à récupérer dans la configuration.'; return;
+    }
 
-    const bodyRows = joined.map(row => {
-      const tdA = colsA.map(c => `<td>${row[c] ?? ''}</td>`).join('');
-      const tdB = activB.map(({ src, dest }) => {
-        const v = row['__b__'+(dest||src)];
-        return v !== null && v !== undefined ? `<td>${v}</td>` : `<td class="empty">—</td>`;
-      }).join('');
-      const tdC = activC.map(({ src, dest }) => {
-        const v = row['__c__'+(dest||src)];
-        return v !== null && v !== undefined ? `<td>${v}</td>` : `<td class="empty">—</td>`;
-      }).join('');
-      return `<tr>${tdA}${tdB}${tdC}</tr>`;
+    statusEl.className='status s-ok';
+    statusEl.textContent=`${matched} ligne(s) · ${unmatched ? unmatched+' exclue(s) (INNER JOIN) · ':''} Aperçu limité à 50 lignes`;
+
+    const headA = colsA.map(c=>`<th style="background:#eff6ff;color:#2563eb">${c}</th>`).join('');
+    const headJ = activeCols.map(({label,from,colorIdx})=>{
+      const c=COLORS[colorIdx%COLORS.length];
+      return `<th style="background:${c.bg};color:${c.fg}">${label}<br><span style="font-weight:400;font-size:10px;opacity:.7">← ${from}</span></th>`;
     }).join('');
 
-    container.innerHTML = `<div class="preview-wrap">
-      <table class="preview">
-        <thead><tr>${headA}${headB}${headC}</tr></thead>
-        <tbody>${bodyRows}</tbody>
-      </table>
-    </div>`;
+    const bodyRows = joined.map(row=>{
+      const tda = colsA.map(c=>`<td>${row[c]??''}</td>`).join('');
+      const tdj = activeCols.map(({key})=>{
+        const v=row[key];
+        return v!==null&&v!==undefined?`<td>${v}</td>`:`<td class="empty">—</td>`;
+      }).join('');
+      return `<tr>${tda}${tdj}</tr>`;
+    }).join('');
 
-  } catch (e) {
-    statusEl.className = 'status status-error';
-    statusEl.textContent = 'Erreur : ' + e.message;
+    container.innerHTML=`<div class="preview-wrap"><table class="pv">
+      <thead><tr>${headA}${headJ}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table></div>`;
+
+  } catch(e) {
+    statusEl.className='status s-err';
+    statusEl.textContent='Erreur : '+e.message;
   }
 }
 
 // ── APPLY ─────────────────────────────────────────────────────────
 function renderApply() {
   const tA = document.getElementById('sel-tableA').value;
-  const tB = document.getElementById('sel-tableB').value;
-  const tC = document.getElementById('sel-tableC').value;
-  const kA_B = document.getElementById('sel-keyA_B').value;
-  const kA_C = document.getElementById('sel-keyA_C').value;
-  const kB = document.getElementById('sel-keyB').value;
-  const kC = document.getElementById('sel-keyC').value;
-
-  document.getElementById('apply-table-name').textContent = tA;
-
-  const activB = state.colsB.filter(c => c.src);
-  const activC = state.colsC.filter(c => c.src);
-
+  document.getElementById('apply-tname').textContent = tA;
   let html = '';
-  activB.forEach(({ src, dest }) => {
-    const name = dest || src;
-    const formula = `${tB}.lookupOne(${kB}=$${kA_B}).${src}`;
-    html += `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6">
-      <span class="badge badge-b" style="flex:none">${name}</span>
-      <code class="mono" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${formula}</code>
-    </div>`;
+  state.joins.forEach(j => {
+    const tJ = document.getElementById('sel-table-'+j.id)?.value || '?';
+    const kM = document.getElementById('sel-keyMain-'+j.id)?.value || '?';
+    const kJ = document.getElementById('sel-keyJoin-'+j.id)?.value || '?';
+    const c = COLORS[j.colorIdx%COLORS.length];
+    j.cols.filter(x=>x.src).forEach(({src,dest})=>{
+      const name = dest||src;
+      const formula = `${tJ}.lookupOne(${kJ}=$${kM}).${src}`;
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6">
+        <span style="background:${c.bg};color:${c.fg};border:1px solid ${c.border};font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;flex:none">${name}</span>
+        <code class="mono" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${formula}</code>
+      </div>`;
+    });
   });
-  activC.forEach(({ src, dest }) => {
-    const name = dest || src;
-    const formula = `${tC}.lookupOne(${kC}=$${kA_C}).${src}`;
-    html += `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6">
-      <span class="badge badge-c" style="flex:none">${name}</span>
-      <code class="mono" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${formula}</code>
-    </div>`;
-  });
-
-  if (!html) html = '<p style="color:#6b7280;font-size:12px">Aucune colonne configurée. Revenez à la Configuration.</p>';
-  document.getElementById('apply-col-list').innerHTML = html;
+  if (!html) html='<p class="small">Aucune colonne configurée.</p>';
+  document.getElementById('apply-list').innerHTML = html;
   document.getElementById('apply-status').innerHTML = '';
 }
 
 async function applyJoins() {
   const tA = document.getElementById('sel-tableA').value;
-  const tB = document.getElementById('sel-tableB').value;
-  const tC = document.getElementById('sel-tableC').value;
-  const kA_B = document.getElementById('sel-keyA_B').value;
-  const kA_C = document.getElementById('sel-keyA_C').value;
-  const kB = document.getElementById('sel-keyB').value;
-  const kC = document.getElementById('sel-keyC').value;
-
-  const activB = state.colsB.filter(c => c.src);
-  const activC = state.colsC.filter(c => c.src);
-  const all = [
-    ...activB.map(({ src, dest }) => ({ name: dest||src, formula: `${tB}.lookupOne(${kB}=$${kA_B}).${src}` })),
-    ...activC.map(({ src, dest }) => ({ name: dest||src, formula: `${tC}.lookupOne(${kC}=$${kA_C}).${src}` }))
-  ];
-
-  if (!all.length) return;
-
+  const existing = state.tables[tA] || [];
   const statusEl = document.getElementById('apply-status');
-  statusEl.className = 'status status-info';
-  statusEl.textContent = 'Création des colonnes…';
-
-  const existingCols = state.tables[tA] || [];
-  let created = 0, skipped = 0;
-
+  statusEl.className='status s-info';
+  statusEl.textContent='Création en cours…';
+  let created=0, skipped=0;
   try {
-    for (const { name, formula } of all) {
-      if (existingCols.includes(name)) { skipped++; continue; }
-      await grist.docApi.applyUserActions([
-        ['AddColumn', tA, name, { type: 'Any', isFormula: true, formula }]
-      ]);
-      created++;
+    for (const j of state.joins) {
+      const tJ = document.getElementById('sel-table-'+j.id)?.value;
+      const kM = document.getElementById('sel-keyMain-'+j.id)?.value;
+      const kJ = document.getElementById('sel-keyJoin-'+j.id)?.value;
+      for (const {src,dest} of j.cols.filter(x=>x.src)) {
+        const name = dest||src;
+        if (existing.includes(name)) { skipped++; continue; }
+        await grist.docApi.applyUserActions([
+          ['AddColumn', tA, name, { type:'Any', isFormula:true, formula:`${tJ}.lookupOne(${kJ}=$${kM}).${src}` }]
+        ]);
+        created++;
+      }
     }
-    // Refresh columns
     const rows = await grist.docApi.fetchTable(tA);
-    state.tables[tA] = Object.keys(rows).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
-
-    statusEl.className = 'status status-success';
-    statusEl.textContent = `${created} colonne(s) créée(s) dans ${tA}${skipped ? ` · ${skipped} ignorée(s) (déjà existante)` : ''}.`;
+    state.tables[tA] = Object.keys(rows).filter(k=>!k.startsWith('gristHelper')&&k!=='manualSort');
+    statusEl.className='status s-ok';
+    statusEl.textContent=`${created} colonne(s) créée(s)${skipped?` · ${skipped} ignorée(s) (déjà existante)`:''}`;
   } catch(e) {
-    statusEl.className = 'status status-error';
-    statusEl.textContent = 'Erreur : ' + e.message;
+    statusEl.className='status s-err';
+    statusEl.textContent='Erreur : '+e.message;
   }
 }
 </script>
