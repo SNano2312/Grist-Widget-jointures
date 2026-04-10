@@ -1,225 +1,514 @@
-
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jointure de tables — Grist Widget</title>
+<script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font-sans); }
-.container { padding: 1.5rem 1rem; max-width: 720px; }
-h2 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 0.25rem; }
-.subtitle { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
-.section-label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-.table-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
-.table-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
-.table-badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: var(--border-radius-md); }
-.badge-main { background: var(--color-background-info); color: var(--color-text-info); }
-.badge-join { background: var(--color-background-secondary); color: var(--color-text-secondary); border: 0.5px solid var(--color-border-secondary); }
-.table-name { font-size: 15px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
-.row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.field-group { display: flex; flex-direction: column; gap: 4px; }
-.field-group label { font-size: 12px; color: var(--color-text-secondary); }
-.field-group input, .field-group select { width: 100%; font-size: 14px; color: var(--color-text-primary); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 6px 10px; }
-.join-connector { display: flex; align-items: center; gap: 10px; margin: -0.25rem 0 0.75rem 1rem; }
-.join-line { width: 2px; height: 32px; background: var(--color-border-secondary); border-radius: 2px; }
-.join-label { font-size: 12px; color: var(--color-text-secondary); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 3px 10px; }
-.join-type-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.75rem; }
-.join-btn { font-size: 12px; padding: 4px 12px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-secondary); cursor: pointer; }
-.join-btn.active { background: var(--color-background-info); color: var(--color-text-info); border-color: transparent; font-weight: 500; }
-.formula-box { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 1rem 1.25rem; margin-top: 1.25rem; }
-.formula-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 0.5rem; }
-.formula-code { font-family: var(--font-mono); font-size: 13px; color: var(--color-text-primary); white-space: pre-wrap; word-break: break-all; line-height: 1.6; }
-.copy-row { display: flex; justify-content: flex-end; margin-top: 0.75rem; gap: 8px; }
-.btn-primary { font-size: 13px; padding: 7px 16px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; }
-.btn-primary:hover { background: var(--color-background-secondary); }
-.btn-action { font-size: 13px; padding: 7px 16px; border: none; border-radius: var(--border-radius-md); background: var(--color-background-info); color: var(--color-text-info); cursor: pointer; font-weight: 500; }
-.info-banner { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 0.75rem 1rem; margin-top: 1.25rem; font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+  :root {
+    --blue: #2563eb; --blue-light: #eff6ff; --blue-border: #bfdbfe;
+    --green: #16a34a; --green-light: #f0fdf4; --green-border: #bbf7d0;
+    --orange: #ea580c; --orange-light: #fff7ed; --orange-border: #fed7aa;
+    --gray: #6b7280; --gray-light: #f9fafb; --gray-border: #e5e7eb;
+    --text: #111827; --text-muted: #6b7280;
+    --radius: 8px; --radius-sm: 5px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: var(--text); background: #fff; }
+
+  #app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* TABS */
+  .tabs { display: flex; border-bottom: 1px solid var(--gray-border); background: var(--gray-light); }
+  .tab { padding: 10px 18px; cursor: pointer; font-size: 13px; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 500; background: #fff; }
+
+  /* PANELS */
+  .panel { display: none; flex: 1; overflow-y: auto; padding: 16px; }
+  .panel.active { display: block; }
+
+  /* SECTION HEADERS */
+  .section-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+  .badge-a { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-border); }
+  .badge-b { background: var(--green-light); color: var(--green); border: 1px solid var(--green-border); }
+  .badge-c { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange-border); }
+
+  /* CARDS */
+  .card { border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; background: #fff; }
+  .card-title { font-weight: 500; font-size: 13px; margin-bottom: 10px; color: var(--text); }
+
+  /* FORM ELEMENTS */
+  label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  select, input[type=text] { width: 100%; padding: 7px 10px; border: 1px solid var(--gray-border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text); background: #fff; }
+  select:focus, input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; }
+
+  /* BUTTONS */
+  .btn { padding: 7px 14px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; border: 1px solid var(--gray-border); background: #fff; color: var(--text); }
+  .btn:hover { background: var(--gray-light); }
+  .btn-primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-success { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn-success:hover { background: #15803d; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-icon { padding: 4px 8px; font-size: 14px; border: none; background: none; cursor: pointer; color: var(--text-muted); }
+  .btn-icon:hover { color: #ef4444; }
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+  /* COL ROWS */
+  .col-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .col-row-head { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-bottom: 4px; }
+  .col-row-head span { font-size: 11px; color: var(--text-muted); }
+
+  /* STATUS */
+  .status { padding: 8px 12px; border-radius: var(--radius-sm); font-size: 12px; margin-bottom: 10px; }
+  .status-info { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-border); }
+  .status-success { background: var(--green-light); color: var(--green); border: 1px solid var(--green-border); }
+  .status-warn { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange-border); }
+  .status-error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+  /* PREVIEW TABLE */
+  .preview-wrap { overflow-x: auto; margin-top: 10px; border: 1px solid var(--gray-border); border-radius: var(--radius); }
+  table.preview { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.preview th { background: var(--gray-light); padding: 7px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid var(--gray-border); white-space: nowrap; }
+  table.preview td { padding: 6px 10px; border-bottom: 1px solid #f3f4f6; }
+  table.preview tr:last-child td { border-bottom: none; }
+  table.preview th.col-a { background: var(--blue-light); color: var(--blue); }
+  table.preview th.col-b { background: var(--green-light); color: var(--green); }
+  table.preview th.col-c { background: var(--orange-light); color: var(--orange); }
+  table.preview td.empty { color: #d1d5db; font-style: italic; }
+
+  /* SEPARATOR */
+  .join-sep { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px 0; }
+  .join-sep-line { flex: 1; height: 1px; background: var(--gray-border); }
+  .join-sep select { width: auto; padding: 3px 8px; font-size: 11px; }
+
+  /* LOADING */
+  #loading { display: flex; align-items: center; justify-content: center; height: 100vh; color: var(--text-muted); gap: 8px; font-size: 13px; }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--gray-border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .divider { border: none; border-top: 1px solid var(--gray-border); margin: 14px 0; }
+  .small { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .mono { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; background: var(--gray-light); padding: 2px 6px; border-radius: 4px; }
+  strong { font-weight: 500; }
 </style>
+</head>
+<body>
 
-<div class="container">
-  <h2>Jointure de tables dans Grist</h2>
-  <p class="subtitle">Configurez la jointure de 3 fichiers Excel importés dans Grist</p>
+<div id="loading">
+  <div class="spinner"></div>
+  Connexion à Grist…
+</div>
 
-  <p class="section-label">Table principale (Table A)</p>
-  <div class="table-card">
-    <div class="table-header">
-      <span class="table-badge badge-main">Principale</span>
-      <span class="table-name">
-        <input id="nameA" style="border:none; background:transparent; font-size:15px; font-weight:500; color:var(--color-text-primary); width:100%; outline:none;" value="Commandes" placeholder="Nom de la table A" />
-      </span>
+<div id="app" style="display:none">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('config')">Configuration</div>
+    <div class="tab" onclick="switchTab('preview')">Aperçu des données</div>
+    <div class="tab" onclick="switchTab('apply')">Appliquer</div>
+  </div>
+
+  <!-- TAB CONFIG -->
+  <div class="panel active" id="tab-config">
+
+    <div class="card">
+      <div class="section-head">
+        <span class="badge badge-a">TABLE PRINCIPALE</span>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>Table principale</label>
+          <select id="sel-tableA" onchange="onTableAChange()"></select>
+        </div>
+        <div>
+          <label>Colonne clé vers B (client_id…)</label>
+          <select id="sel-keyA_B"></select>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label>Colonne clé vers C</label>
+        <select id="sel-keyA_C"></select>
+      </div>
     </div>
-    <div class="row-grid">
-      <div class="field-group">
-        <label>Colonne clé (ex: client_id)</label>
-        <input id="keyA" value="client_id" placeholder="Nom de la colonne" />
+
+    <div class="join-sep">
+      <div class="join-sep-line"></div>
+      <select id="join-type-b" onchange="renderPreview()">
+        <option value="left">LEFT JOIN</option>
+        <option value="inner">INNER JOIN</option>
+      </select>
+      <div class="join-sep-line"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-head">
+        <span class="badge badge-b">TABLE B</span>
       </div>
-      <div class="field-group">
-        <label>Colonnes à récupérer</label>
-        <input id="colsA" value="commande_id, date, montant" placeholder="col1, col2, ..." />
+      <div class="grid2">
+        <div>
+          <label>Table B</label>
+          <select id="sel-tableB" onchange="onTableBChange()"></select>
+        </div>
+        <div>
+          <label>Clé dans B</label>
+          <select id="sel-keyB"></select>
+        </div>
       </div>
+      <hr class="divider">
+      <div class="card-title">Colonnes à récupérer depuis B</div>
+      <div class="col-row-head"><span>Colonne dans B</span><span>Nom dans table principale</span><span></span></div>
+      <div id="cols-b-list"></div>
+      <button class="btn btn-sm" onclick="addColRow('b')">+ Ajouter colonne</button>
+    </div>
+
+    <div class="join-sep">
+      <div class="join-sep-line"></div>
+      <select id="join-type-c" onchange="renderPreview()">
+        <option value="left">LEFT JOIN</option>
+        <option value="inner">INNER JOIN</option>
+      </select>
+      <div class="join-sep-line"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-head">
+        <span class="badge badge-c">TABLE C</span>
+      </div>
+      <div class="grid2">
+        <div>
+          <label>Table C</label>
+          <select id="sel-tableC" onchange="onTableCChange()"></select>
+        </div>
+        <div>
+          <label>Clé dans C</label>
+          <select id="sel-keyC"></select>
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="card-title">Colonnes à récupérer depuis C</div>
+      <div class="col-row-head"><span>Colonne dans C</span><span>Nom dans table principale</span><span></span></div>
+      <div id="cols-c-list"></div>
+      <button class="btn btn-sm" onclick="addColRow('c')">+ Ajouter colonne</button>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="switchTab('preview'); renderPreview()">Voir l'aperçu →</button>
     </div>
   </div>
 
-  <div class="join-connector">
-    <div class="join-line"></div>
-    <span class="join-label" id="join1-label">LEFT JOIN</span>
+  <!-- TAB PREVIEW -->
+  <div class="panel" id="tab-preview">
+    <div id="preview-status" class="status status-info">Configurez les tables puis revenez ici.</div>
+    <div id="preview-container"></div>
   </div>
 
-  <p class="section-label">Table B</p>
-  <div class="table-card">
-    <div class="table-header">
-      <span class="table-badge badge-join">Jointure 1</span>
-      <span class="table-name">
-        <input id="nameB" style="border:none; background:transparent; font-size:15px; font-weight:500; color:var(--color-text-primary); width:100%; outline:none;" value="Clients" placeholder="Nom de la table B" />
-      </span>
-    </div>
-    <div class="row-grid">
-      <div class="field-group">
-        <label>Colonne clé (clé étrangère)</label>
-        <input id="keyB" value="client_id" placeholder="Nom de la colonne" />
+  <!-- TAB APPLY -->
+  <div class="panel" id="tab-apply">
+    <div class="card">
+      <div class="card-title">Colonnes qui seront créées dans <span id="apply-table-name" style="color:var(--blue)">—</span></div>
+      <div id="apply-col-list" style="margin-bottom:12px"></div>
+      <div id="apply-status"></div>
+      <div class="btn-row">
+        <button class="btn btn-success" onclick="applyJoins()">Créer les colonnes dans Grist</button>
       </div>
-      <div class="field-group">
-        <label>Colonnes à récupérer</label>
-        <input id="colsB" value="nom, email, ville" placeholder="col1, col2, ..." />
-      </div>
+      <p class="small" style="margin-top:10px">Les colonnes de formule seront ajoutées à votre table principale. Si une colonne du même nom existe déjà, elle sera ignorée.</p>
     </div>
-    <div class="join-type-row" id="join1-types">
-      <button class="join-btn active" onclick="setJoin(1,'LEFT JOIN',this)">LEFT JOIN</button>
-      <button class="join-btn" onclick="setJoin(1,'INNER JOIN',this)">INNER JOIN</button>
-      <button class="join-btn" onclick="setJoin(1,'FULL JOIN',this)">FULL JOIN</button>
-    </div>
-  </div>
-
-  <div class="join-connector">
-    <div class="join-line"></div>
-    <span class="join-label" id="join2-label">LEFT JOIN</span>
-  </div>
-
-  <p class="section-label">Table C</p>
-  <div class="table-card">
-    <div class="table-header">
-      <span class="table-badge badge-join">Jointure 2</span>
-      <span class="table-name">
-        <input id="nameC" style="border:none; background:transparent; font-size:15px; font-weight:500; color:var(--color-text-primary); width:100%; outline:none;" value="Produits" placeholder="Nom de la table C" />
-      </span>
-    </div>
-    <div class="row-grid">
-      <div class="field-group">
-        <label>Colonne clé de A (référence)</label>
-        <input id="keyC_from" value="produit_id" placeholder="Col dans table A ou B" />
-      </div>
-      <div class="field-group">
-        <label>Colonne clé dans C</label>
-        <input id="keyC" value="produit_id" placeholder="Nom de la colonne" />
-      </div>
-    </div>
-    <div class="row-grid" style="margin-top: 8px;">
-      <div class="field-group">
-        <label>Colonnes à récupérer</label>
-        <input id="colsC" value="nom_produit, categorie, prix" placeholder="col1, col2, ..." />
-      </div>
-    </div>
-    <div class="join-type-row" id="join2-types">
-      <button class="join-btn active" onclick="setJoin(2,'LEFT JOIN',this)">LEFT JOIN</button>
-      <button class="join-btn" onclick="setJoin(2,'INNER JOIN',this)">INNER JOIN</button>
-      <button class="join-btn" onclick="setJoin(2,'FULL JOIN',this)">FULL JOIN</button>
-    </div>
-  </div>
-
-  <div id="formula-section" class="formula-box">
-    <div class="formula-label">Formule Grist générée — à coller dans une colonne de formule</div>
-    <div id="formula-output" class="formula-code"></div>
-  </div>
-
-  <div class="copy-row">
-    <button class="btn-primary" onclick="generateFormula()">Régénérer</button>
-    <button class="btn-action" onclick="copyFormula()">Copier la formule ↗</button>
-  </div>
-
-  <div class="info-banner">
-    <strong style="font-weight:500;">Comment utiliser dans Grist</strong><br>
-    1. Importez vos 3 fichiers Excel via <em>Ajouter nouveau &gt; Importer depuis un fichier</em>.<br>
-    2. Créez une nouvelle table vide ou utilisez une table existante.<br>
-    3. Créez une colonne de formule et collez la formule générée ci-dessus.<br>
-    4. Grist utilise Python — les jointures se font via <code>VLOOKUP</code> ou via des <strong>références de colonnes</strong>.
   </div>
 </div>
 
 <script>
-const joinTypes = { 1: 'LEFT JOIN', 2: 'LEFT JOIN' };
+// ── STATE ────────────────────────────────────────────────────────
+const state = {
+  tables: {},      // { tableName: [colName, ...] }
+  tableNames: [],
+  dataA: [], dataB: [], dataC: [],
+  colsB: [{ src: '', dest: '' }],
+  colsC: [{ src: '', dest: '' }],
+};
 
-function setJoin(num, type, btn) {
-  joinTypes[num] = type;
-  document.getElementById('join' + num + '-label').textContent = type;
-  const container = document.getElementById('join' + num + '-types');
-  container.querySelectorAll('.join-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  generateFormula();
-}
+// ── GRIST INIT ───────────────────────────────────────────────────
+grist.ready({ requiredAccess: 'full' });
 
-function v(id) { return document.getElementById(id).value.trim(); }
-
-function generateFormula() {
-  const tA = v('nameA'), tB = v('nameB'), tC = v('nameC');
-  const kA = v('keyA'), kB = v('keyB');
-  const kCfrom = v('keyC_from'), kC = v('keyC');
-  const colsB = v('colsB').split(',').map(s => s.trim()).filter(Boolean);
-  const colsC = v('colsC').split(',').map(s => s.trim()).filter(Boolean);
-  const j1 = joinTypes[1], j2 = joinTypes[2];
-
-  let lines = [];
-  lines.push(`# Jointure ${tA} + ${tB} (${j1}) + ${tC} (${j2})`);
-  lines.push(`# Collez chaque formule dans une colonne dédiée de votre table ${tA}`);
-  lines.push('');
-
-  if (colsB.length > 0) {
-    lines.push(`# --- Colonnes depuis ${tB} ---`);
-    colsB.forEach(col => {
-      if (j1 === 'INNER JOIN') {
-        lines.push(`# Colonne: ${col}`);
-        lines.push(`${tB}.lookupOne(${kB}=$${kA}).${col}`);
-      } else {
-        lines.push(`# Colonne: ${col} (None si absent)`);
-        lines.push(`${tB}.lookupOne(${kB}=$${kA}).${col} or None`);
-      }
-      lines.push('');
-    });
-  }
-
-  if (colsC.length > 0) {
-    lines.push(`# --- Colonnes depuis ${tC} ---`);
-    colsC.forEach(col => {
-      if (j2 === 'INNER JOIN') {
-        lines.push(`# Colonne: ${col}`);
-        lines.push(`${tC}.lookupOne(${kC}=$${kCfrom}).${col}`);
-      } else {
-        lines.push(`# Colonne: ${col} (None si absent)`);
-        lines.push(`${tC}.lookupOne(${kC}=$${kCfrom}).${col} or None`);
-      }
-      lines.push('');
-    });
-  }
-
-  lines.push(`# --- Exemple: plusieurs colonnes en une seule formule ---`);
-  const exB = colsB[0] || 'nom';
-  const exC = colsC[0] || 'categorie';
-  lines.push(`{`);
-  lines.push(`  "${tB}_${exB}": ${tB}.lookupOne(${kB}=$${kA}).${exB},`);
-  lines.push(`  "${tC}_${exC}": ${tC}.lookupOne(${kC}=$${kCfrom}).${exC}`);
-  lines.push(`}`);
-
-  document.getElementById('formula-output').textContent = lines.join('\n');
-}
-
-function copyFormula() {
-  const text = document.getElementById('formula-output').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = event.target;
-    const orig = btn.textContent;
-    btn.textContent = 'Copié !';
-    setTimeout(() => btn.textContent = orig, 1500);
-  });
-}
-
-['nameA','nameB','nameC','keyA','keyB','keyC_from','keyC','colsA','colsB','colsC'].forEach(id => {
-  document.getElementById(id).addEventListener('input', generateFormula);
+grist.on('message', async () => {
+  await init();
 });
 
-generateFormula();
+async function init() {
+  try {
+    const tables = await grist.docApi.listTables();
+    state.tableNames = tables;
+    // Fetch columns for each table
+    for (const t of tables) {
+      const rows = await grist.docApi.fetchTable(t);
+      state.tables[t] = Object.keys(rows).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
+    }
+    populateSelects();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+  } catch (e) {
+    document.getElementById('loading').innerHTML = `<div style="color:#dc2626;text-align:center;padding:20px">
+      Erreur de connexion à Grist.<br><span style="font-size:11px;color:#6b7280">${e.message}</span>
+    </div>`;
+  }
+}
+
+// ── SELECTS ──────────────────────────────────────────────────────
+function populateSelects() {
+  const names = state.tableNames;
+  ['sel-tableA','sel-tableB','sel-tableC'].forEach((id, i) => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = names.map(n => `<option value="${n}">${n}</option>`).join('');
+    if (names[i]) sel.value = names[i];
+  });
+  onTableAChange(); onTableBChange(); onTableCChange();
+  renderColRows('b'); renderColRows('c');
+}
+
+function fillColSelect(selId, tableName) {
+  const sel = document.getElementById(selId);
+  const cols = state.tables[tableName] || [];
+  sel.innerHTML = cols.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function onTableAChange() {
+  const t = document.getElementById('sel-tableA').value;
+  fillColSelect('sel-keyA_B', t);
+  fillColSelect('sel-keyA_C', t);
+}
+function onTableBChange() { fillColSelect('sel-keyB', document.getElementById('sel-tableB').value); }
+function onTableCChange() { fillColSelect('sel-keyC', document.getElementById('sel-tableC').value); }
+
+// ── COL ROWS ─────────────────────────────────────────────────────
+function addColRow(t) {
+  state['cols'+t.toUpperCase()].push({ src: '', dest: '' });
+  renderColRows(t);
+}
+
+function removeColRow(t, i) {
+  state['cols'+t.toUpperCase()].splice(i, 1);
+  renderColRows(t);
+}
+
+function renderColRows(t) {
+  const arr = state['cols'+t.toUpperCase()];
+  const tableKey = t === 'b' ? 'sel-tableB' : 'sel-tableC';
+  const tableName = document.getElementById(tableKey).value;
+  const cols = state.tables[tableName] || [];
+  const container = document.getElementById('cols-'+t+'-list');
+  container.innerHTML = arr.map((row, i) => `
+    <div class="col-row">
+      <select onchange="state.cols${t.toUpperCase()}[${i}].src=this.value; renderPreview()">
+        <option value="">— choisir —</option>
+        ${cols.map(c => `<option value="${c}" ${row.src===c?'selected':''}>${c}</option>`).join('')}
+      </select>
+      <input type="text" placeholder="nom_dans_principale" value="${row.dest}"
+        oninput="state.cols${t.toUpperCase()}[${i}].dest=this.value" />
+      <button class="btn-icon" onclick="removeColRow('${t}',${i})">✕</button>
+    </div>`).join('');
+}
+
+// ── TABS ─────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['config','preview','apply'][i] === name);
+  });
+  document.querySelectorAll('.panel').forEach((p,i) => {
+    p.classList.toggle('active', ['tab-config','tab-preview','tab-apply'][i] === 'tab-'+name);
+  });
+  if (name === 'apply') renderApply();
+  if (name === 'preview') renderPreview();
+}
+
+// ── FETCH DATA ───────────────────────────────────────────────────
+async function fetchTableData(tableName) {
+  const raw = await grist.docApi.fetchTable(tableName);
+  const cols = Object.keys(raw).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
+  const len = raw[cols[0]]?.length || 0;
+  const rows = [];
+  for (let i = 0; i < len; i++) {
+    const row = {};
+    cols.forEach(c => row[c] = raw[c][i]);
+    rows.push(row);
+  }
+  return rows;
+}
+
+// ── PREVIEW ──────────────────────────────────────────────────────
+async function renderPreview() {
+  const statusEl = document.getElementById('preview-status');
+  const container = document.getElementById('preview-container');
+  statusEl.className = 'status status-info';
+  statusEl.textContent = 'Chargement des données…';
+  container.innerHTML = '';
+
+  const tA = document.getElementById('sel-tableA').value;
+  const tB = document.getElementById('sel-tableB').value;
+  const tC = document.getElementById('sel-tableC').value;
+  const kA_B = document.getElementById('sel-keyA_B').value;
+  const kA_C = document.getElementById('sel-keyA_C').value;
+  const kB = document.getElementById('sel-keyB').value;
+  const kC = document.getElementById('sel-keyC').value;
+  const joinB = document.getElementById('join-type-b').value;
+  const joinC = document.getElementById('join-type-c').value;
+
+  try {
+    const [rowsA, rowsB, rowsC] = await Promise.all([
+      fetchTableData(tA), fetchTableData(tB), fetchTableData(tC)
+    ]);
+
+    // Build lookup maps
+    const mapB = {};
+    rowsB.forEach(r => { if (r[kB] !== undefined) mapB[r[kB]] = r; });
+    const mapC = {};
+    rowsC.forEach(r => { if (r[kC] !== undefined) mapC[r[kC]] = r; });
+
+    // Active col configs
+    const activB = state.colsB.filter(c => c.src);
+    const activC = state.colsC.filter(c => c.src);
+
+    if (!activB.length && !activC.length) {
+      statusEl.className = 'status status-warn';
+      statusEl.textContent = 'Ajoutez au moins une colonne à récupérer dans la configuration.';
+      return;
+    }
+
+    // Joined rows (max 50 for preview)
+    const colsA = Object.keys(rowsA[0] || {});
+    const joined = [];
+    let matched = 0, unmatched = 0;
+
+    for (const rowA of rowsA.slice(0, 50)) {
+      const rowB = mapB[rowA[kA_B]];
+      const rowC = mapC[rowA[kA_C]];
+      if (!rowB && joinB === 'inner') { unmatched++; continue; }
+      if (!rowC && joinC === 'inner') { unmatched++; continue; }
+      matched++;
+      const out = {};
+      colsA.forEach(c => out[c] = rowA[c]);
+      activB.forEach(({ src, dest }) => { out['__b__'+(dest||src)] = rowB ? rowB[src] : null; });
+      activC.forEach(({ src, dest }) => { out['__c__'+(dest||src)] = rowC ? rowC[src] : null; });
+      joined.push(out);
+    }
+
+    statusEl.className = 'status status-success';
+    statusEl.textContent = `${matched} ligne(s) jointe(s) affichées${unmatched ? ` · ${unmatched} exclue(s) (INNER JOIN sans correspondance)` : ''} · Aperçu limité à 50 lignes`;
+
+    // Build table
+    const headA = colsA.map(c => `<th class="col-a">${c}</th>`).join('');
+    const headB = activB.map(({ src, dest }) => `<th class="col-b">${dest||src}<br><span style="font-weight:400;font-size:10px;opacity:.7">← ${tB}.${src}</span></th>`).join('');
+    const headC = activC.map(({ src, dest }) => `<th class="col-c">${dest||src}<br><span style="font-weight:400;font-size:10px;opacity:.7">← ${tC}.${src}</span></th>`).join('');
+
+    const bodyRows = joined.map(row => {
+      const tdA = colsA.map(c => `<td>${row[c] ?? ''}</td>`).join('');
+      const tdB = activB.map(({ src, dest }) => {
+        const v = row['__b__'+(dest||src)];
+        return v !== null && v !== undefined ? `<td>${v}</td>` : `<td class="empty">—</td>`;
+      }).join('');
+      const tdC = activC.map(({ src, dest }) => {
+        const v = row['__c__'+(dest||src)];
+        return v !== null && v !== undefined ? `<td>${v}</td>` : `<td class="empty">—</td>`;
+      }).join('');
+      return `<tr>${tdA}${tdB}${tdC}</tr>`;
+    }).join('');
+
+    container.innerHTML = `<div class="preview-wrap">
+      <table class="preview">
+        <thead><tr>${headA}${headB}${headC}</tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </div>`;
+
+  } catch (e) {
+    statusEl.className = 'status status-error';
+    statusEl.textContent = 'Erreur : ' + e.message;
+  }
+}
+
+// ── APPLY ─────────────────────────────────────────────────────────
+function renderApply() {
+  const tA = document.getElementById('sel-tableA').value;
+  const tB = document.getElementById('sel-tableB').value;
+  const tC = document.getElementById('sel-tableC').value;
+  const kA_B = document.getElementById('sel-keyA_B').value;
+  const kA_C = document.getElementById('sel-keyA_C').value;
+  const kB = document.getElementById('sel-keyB').value;
+  const kC = document.getElementById('sel-keyC').value;
+
+  document.getElementById('apply-table-name').textContent = tA;
+
+  const activB = state.colsB.filter(c => c.src);
+  const activC = state.colsC.filter(c => c.src);
+
+  let html = '';
+  activB.forEach(({ src, dest }) => {
+    const name = dest || src;
+    const formula = `${tB}.lookupOne(${kB}=$${kA_B}).${src}`;
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6">
+      <span class="badge badge-b" style="flex:none">${name}</span>
+      <code class="mono" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${formula}</code>
+    </div>`;
+  });
+  activC.forEach(({ src, dest }) => {
+    const name = dest || src;
+    const formula = `${tC}.lookupOne(${kC}=$${kA_C}).${src}`;
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6">
+      <span class="badge badge-c" style="flex:none">${name}</span>
+      <code class="mono" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${formula}</code>
+    </div>`;
+  });
+
+  if (!html) html = '<p style="color:#6b7280;font-size:12px">Aucune colonne configurée. Revenez à la Configuration.</p>';
+  document.getElementById('apply-col-list').innerHTML = html;
+  document.getElementById('apply-status').innerHTML = '';
+}
+
+async function applyJoins() {
+  const tA = document.getElementById('sel-tableA').value;
+  const tB = document.getElementById('sel-tableB').value;
+  const tC = document.getElementById('sel-tableC').value;
+  const kA_B = document.getElementById('sel-keyA_B').value;
+  const kA_C = document.getElementById('sel-keyA_C').value;
+  const kB = document.getElementById('sel-keyB').value;
+  const kC = document.getElementById('sel-keyC').value;
+
+  const activB = state.colsB.filter(c => c.src);
+  const activC = state.colsC.filter(c => c.src);
+  const all = [
+    ...activB.map(({ src, dest }) => ({ name: dest||src, formula: `${tB}.lookupOne(${kB}=$${kA_B}).${src}` })),
+    ...activC.map(({ src, dest }) => ({ name: dest||src, formula: `${tC}.lookupOne(${kC}=$${kA_C}).${src}` }))
+  ];
+
+  if (!all.length) return;
+
+  const statusEl = document.getElementById('apply-status');
+  statusEl.className = 'status status-info';
+  statusEl.textContent = 'Création des colonnes…';
+
+  const existingCols = state.tables[tA] || [];
+  let created = 0, skipped = 0;
+
+  try {
+    for (const { name, formula } of all) {
+      if (existingCols.includes(name)) { skipped++; continue; }
+      await grist.docApi.applyUserActions([
+        ['AddColumn', tA, name, { type: 'Any', isFormula: true, formula }]
+      ]);
+      created++;
+    }
+    // Refresh columns
+    const rows = await grist.docApi.fetchTable(tA);
+    state.tables[tA] = Object.keys(rows).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
+
+    statusEl.className = 'status status-success';
+    statusEl.textContent = `${created} colonne(s) créée(s) dans ${tA}${skipped ? ` · ${skipped} ignorée(s) (déjà existante)` : ''}.`;
+  } catch(e) {
+    statusEl.className = 'status status-error';
+    statusEl.textContent = 'Erreur : ' + e.message;
+  }
+}
 </script>
+</body>
+</html>
