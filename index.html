@@ -284,11 +284,14 @@ grist.on('message', () => init());
 // ── SNIPPETS ─────────────────────────────────────────────────────
 function renderSnippets() {
   const c = document.getElementById('snippets-container');
-  c.innerHTML = SNIPPETS.map(s =>
-    `<button class="snippet-btn" onclick="addFormulaRow('${s.name}','${s.formula.replace(/'/g,"\\'")}')">
-      + ${s.label}
-    </button>`
-  ).join('');
+  c.innerHTML = '';
+  SNIPPETS.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'snippet-btn';
+    btn.textContent = '+ ' + s.label;
+    btn.addEventListener('click', () => addFormulaRow(s.name, s.formula));
+    c.appendChild(btn);
+  });
 }
 
 // ── SELECTS ──────────────────────────────────────────────────────
