@@ -214,16 +214,34 @@ function applyConfig(cfg) {
 grist.ready({ requiredAccess: 'full' });
 grist.on('message', async () => { await init(); });
 
+// Fallback: initialize directly if grist message never fires (e.g. outside iframe)
+let _inited = false;
+async function initOnce() {
+  if (_inited) return;
+  _inited = true;
+  await init();
+}
+// Try after short delay in case grist message fires first
+setTimeout(initOnce, 800);
+
 async function init() {
   try {
-    const tables = await grist.docApi.listTables();
-    state.tableNames = tables;
-    for (const t of tables) {
-      const rows = await grist.docApi.fetchTable(t);
-      state.tables[t] = Object.keys(rows).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
+    let tables = [];
+    try {
+      tables = await grist.docApi.listTables();
+      state.tableNames = tables;
+      for (const t of tables) {
+        const rows = await grist.docApi.fetchTable(t);
+        state.tables[t] = Object.keys(rows).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
+      }
+    } catch(e) {
+      // Not connected to Grist yet — show UI anyway so user can see the widget
+      state.tableNames = [];
+      state.tables = {};
     }
     populateMainSelect();
-    const saved = await loadConfig();
+    let saved = null;
+    try { saved = await loadConfig(); } catch(e) {}
     if (saved) { applyConfig(saved); }
     else { addJoin(); }
     document.getElementById('loading').style.display = 'none';
