@@ -125,18 +125,18 @@
         </div>
         <div>
           <label>Colonne clé vers B (client_id…)</label>
-          <select id="sel-keyA_B"></select>
+          <select id="sel-keyA_B" onchange="saveConfig()"></select>
         </div>
       </div>
       <div style="margin-top:10px">
         <label>Colonne clé vers C</label>
-        <select id="sel-keyA_C"></select>
+        <select id="sel-keyA_C" onchange="saveConfig()"></select>
       </div>
     </div>
 
     <div class="join-sep">
       <div class="join-sep-line"></div>
-      <select id="join-type-b" onchange="renderPreview()">
+      <select id="join-type-b" onchange="renderPreview(); saveConfig()">
         <option value="left">LEFT JOIN</option>
         <option value="inner">INNER JOIN</option>
       </select>
@@ -154,7 +154,7 @@
         </div>
         <div>
           <label>Clé dans B</label>
-          <select id="sel-keyB"></select>
+          <select id="sel-keyB" onchange="saveConfig()"></select>
         </div>
       </div>
       <hr class="divider">
@@ -166,7 +166,7 @@
 
     <div class="join-sep">
       <div class="join-sep-line"></div>
-      <select id="join-type-c" onchange="renderPreview()">
+      <select id="join-type-c" onchange="renderPreview(); saveConfig()">
         <option value="left">LEFT JOIN</option>
         <option value="inner">INNER JOIN</option>
       </select>
@@ -184,7 +184,7 @@
         </div>
         <div>
           <label>Clé dans C</label>
-          <select id="sel-keyC"></select>
+          <select id="sel-keyC" onchange="saveConfig()"></select>
         </div>
       </div>
       <hr class="divider">
@@ -222,12 +222,58 @@
 <script>
 // ── STATE ────────────────────────────────────────────────────────
 const state = {
-  tables: {},      // { tableName: [colName, ...] }
+  tables: {},
   tableNames: [],
-  dataA: [], dataB: [], dataC: [],
   colsB: [{ src: '', dest: '' }],
   colsC: [{ src: '', dest: '' }],
 };
+
+// ── PERSISTENCE ──────────────────────────────────────────────────
+async function saveConfig() {
+  try {
+    const cfg = {
+      tableA: document.getElementById('sel-tableA').value,
+      tableB: document.getElementById('sel-tableB').value,
+      tableC: document.getElementById('sel-tableC').value,
+      keyA_B: document.getElementById('sel-keyA_B').value,
+      keyA_C: document.getElementById('sel-keyA_C').value,
+      keyB:   document.getElementById('sel-keyB').value,
+      keyC:   document.getElementById('sel-keyC').value,
+      joinB:  document.getElementById('join-type-b').value,
+      joinC:  document.getElementById('join-type-c').value,
+      colsB:  state.colsB,
+      colsC:  state.colsC,
+    };
+    await grist.setOption('joinConfig', JSON.stringify(cfg));
+  } catch(e) {}
+}
+
+async function loadConfig() {
+  try {
+    const raw = await grist.getOption('joinConfig');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+function applyConfig(cfg) {
+  if (!cfg) return;
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && [...el.options].some(o => o.value === val)) el.value = val;
+  };
+  setVal('sel-tableA', cfg.tableA); onTableAChange();
+  setVal('sel-tableB', cfg.tableB); onTableBChange();
+  setVal('sel-tableC', cfg.tableC); onTableCChange();
+  setVal('sel-keyA_B', cfg.keyA_B);
+  setVal('sel-keyA_C', cfg.keyA_C);
+  setVal('sel-keyB', cfg.keyB);
+  setVal('sel-keyC', cfg.keyC);
+  if (cfg.joinB) document.getElementById('join-type-b').value = cfg.joinB;
+  if (cfg.joinC) document.getElementById('join-type-c').value = cfg.joinC;
+  if (cfg.colsB?.length) { state.colsB = cfg.colsB; renderColRows('b'); }
+  if (cfg.colsC?.length) { state.colsC = cfg.colsC; renderColRows('c'); }
+}
 
 // ── GRIST INIT ───────────────────────────────────────────────────
 grist.ready({ requiredAccess: 'full' });
@@ -240,12 +286,13 @@ async function init() {
   try {
     const tables = await grist.docApi.listTables();
     state.tableNames = tables;
-    // Fetch columns for each table
     for (const t of tables) {
       const rows = await grist.docApi.fetchTable(t);
       state.tables[t] = Object.keys(rows).filter(k => !k.startsWith('gristHelper') && k !== 'manualSort');
     }
     populateSelects();
+    const saved = await loadConfig();
+    if (saved) applyConfig(saved);
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
   } catch (e) {
@@ -277,19 +324,22 @@ function onTableAChange() {
   const t = document.getElementById('sel-tableA').value;
   fillColSelect('sel-keyA_B', t);
   fillColSelect('sel-keyA_C', t);
+  saveConfig();
 }
-function onTableBChange() { fillColSelect('sel-keyB', document.getElementById('sel-tableB').value); }
-function onTableCChange() { fillColSelect('sel-keyC', document.getElementById('sel-tableC').value); }
+function onTableBChange() { fillColSelect('sel-keyB', document.getElementById('sel-tableB').value); saveConfig(); }
+function onTableCChange() { fillColSelect('sel-keyC', document.getElementById('sel-tableC').value); saveConfig(); }
 
 // ── COL ROWS ─────────────────────────────────────────────────────
 function addColRow(t) {
   state['cols'+t.toUpperCase()].push({ src: '', dest: '' });
   renderColRows(t);
+  saveConfig();
 }
 
 function removeColRow(t, i) {
   state['cols'+t.toUpperCase()].splice(i, 1);
   renderColRows(t);
+  saveConfig();
 }
 
 function renderColRows(t) {
@@ -305,7 +355,7 @@ function renderColRows(t) {
         ${cols.map(c => `<option value="${c}" ${row.src===c?'selected':''}>${c}</option>`).join('')}
       </select>
       <input type="text" placeholder="nom_dans_principale" value="${row.dest}"
-        oninput="state.cols${t.toUpperCase()}[${i}].dest=this.value" />
+        oninput="state.cols${t.toUpperCase()}[${i}].dest=this.value; saveConfig()" />
       <button class="btn-icon" onclick="removeColRow('${t}',${i})">✕</button>
     </div>`).join('');
 }
